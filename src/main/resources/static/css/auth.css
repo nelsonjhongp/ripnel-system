@@ -23,9 +23,11 @@ body{
   grid-template-columns: 1fr 1fr;
 }
 .auth-left{
-  background: url("/img/login-side.jpg") center/cover no-repeat;
-  filter:saturate(1.1) contrast(1.05);
+  background: var(--panel) url("/img/login-side.png") center no-repeat;
+  background-size: clamp(280px, 50%, 480px);
+  filter:saturate(1.05) contrast(1.02);
 }
+
 .auth-right{
   display:flex;
   align-items:center;

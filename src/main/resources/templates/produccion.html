@@ -1,7 +1,10 @@
-<!doctype html><html><body>
-<div th:with="title='Producción'" th:replace="_nav :: *"></div>
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:replace="~{_nav :: bar('Producción')}"></div>
 <div style="padding:16px;color:#e5e7eb;background:#0f172a;min-height:100vh">
     <h2>Panel Producción</h2>
-    <p>Órdenes de producción, consumo, terminados y control de calidad.</p>
+    <p>Órdenes de producción, consumo de materiales, terminados y QC.</p>
 </div>
-</body></html>
+</body>
+</html>

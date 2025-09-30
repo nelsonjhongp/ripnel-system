@@ -1,7 +1,10 @@
-<!doctype html><html><body>
-<div th:with="title='Compras'" th:replace="_nav :: *"></div>
-<div style="padding:16px;color:#e5e7eb;background:#0f172a;min-height:100vh">
-  <h2>Panel Compras</h2>
-  <p>Proveedores y Órdenes de compra.</p>
-</div>
-</body></html>
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+  <div th:replace="~{_nav :: bar('Compras')}"></div>
+  <div style="padding:16px;color:#e5e7eb;background:#0f172a;min-height:100vh">
+    <h2>Panel Compras</h2>
+    <p>Proveedores y órdenes de compra.</p>
+  </div>
+</body>
+</html>

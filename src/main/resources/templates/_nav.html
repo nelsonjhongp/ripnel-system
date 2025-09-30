@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Fragmento llamado "bar" con un parámetro "title" -->
+<nav th:fragment="bar(title='Panel')"
+     style="display:flex;justify-content:space-between;align-items:center;background:#111827;color:#e5e7eb;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08)">
+  <div><strong>RIPNEL</strong> · <span th:text="${title}">Panel</span></div>
+  <div><a th:href="@{/logout}" style="color:#93c5fd;text-decoration:none">Cerrar sesión</a></div>
+</nav>
+</body>
+</html>

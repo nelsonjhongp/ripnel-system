@@ -1,10 +1,15 @@
-<!doctype html><html><body>
-<div th:replace="_nav :: *"></div>
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Incluye el fragmento "bar" y le pasa el título "Admin" -->
+<div th:replace="~{_nav :: bar('Admin')}"></div>
+
 <div style="padding:16px;color:#e5e7eb;background:#0f172a;min-height:100vh">
     <h2>Panel ADMIN</h2>
     <ul>
-        <li><a href="/productos" style="color:#93c5fd">Gestión de productos</a></li>
-        <li><a href="/reportes" style="color:#93c5fd">Reportes</a></li>
+        <li><a th:href="@{/productos}" style="color:#93c5fd">Gestión de productos</a></li>
+        <li><a th:href="@{/reportes}" style="color:#93c5fd">Reportes</a></li>
     </ul>
 </div>
-</body></html>
+</body>
+</html>
