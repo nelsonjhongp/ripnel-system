@@ -11,31 +11,19 @@ public class AuthController {
     private final AuthService authService;
     public AuthController(AuthService authService) { this.authService = authService; }
 
-    @GetMapping("/login")
-    public String loginForm(Model model) {
-        model.addAttribute("error", null);
-        return "login"; // templates/login.html
-    }
-
     @PostMapping("/login")
     public String doLogin(@RequestParam String email,
                           @RequestParam String password,
-                          Model model,
-                          HttpSession session) {
+                          HttpSession session,
+                          Model model) {
         return authService.login(email, password)
                 .map(u -> {
-                    session.setAttribute("user", u);
-                    if (u.hasRole("ADMIN"))       return "redirect:/admin";
-                    if (u.hasRole("ALMACEN"))     return "redirect:/almacen";
-                    if (u.hasRole("COMPRAS"))     return "redirect:/compras";
-                    if (u.hasRole("PRODUCCION"))  return "redirect:/produccion";
-                    if (u.hasRole("VENDEDOR"))    return "redirect:/ventas";
-                    return "redirect:/home";
+                    session.setAttribute("USER", u);
+                    boolean isAdmin = u.getRoles()!=null && u.getRoles().stream()
+                            .anyMatch(r -> "ADMIN".equalsIgnoreCase(r.getName()));
+                    return isAdmin ? "redirect:/admin" : "redirect:/home";
                 })
-                .orElseGet(() -> {
-                    model.addAttribute("error", "Credenciales inválidas");
-                    return "login";
-                });
+                .orElseGet(() -> { model.addAttribute("error", "Credenciales inválidas"); return "login";});
     }
 
     @GetMapping("/logout")
@@ -45,5 +33,12 @@ public class AuthController {
     }
 
     @GetMapping("/")
-    public String root(){ return "redirect:/login"; }
+    public String root(HttpSession session){
+        return (session.getAttribute("USER") != null)
+                ? "redirect:/home"
+                : "redirect:/login";
+    }
+
+    @GetMapping("/login")
+    public String loginPage(){ return "login"; }
 }

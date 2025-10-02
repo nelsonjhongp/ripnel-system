@@ -1,0 +1,16 @@
+/* /static/css/app.css */
+:root{
+  --panel: #111827; /* si quieres un panel oscuro personalizado */
+}
+
+/* Ajustes globales menores */
+.container { max-width: 1100px; }
+
+/* Auth layout (si quieres mantener tu composición anterior) */
+.auth-wrap { min-height: calc(100vh - 56px); display: grid; grid-template-columns: 1fr 1fr; }
+.auth-left { background: url('/img/login-side.jpg') center/cover no-repeat; }
+.auth-right { display: grid; place-items: center; padding: 24px; }
+@media (max-width: 992px){
+  .auth-wrap { grid-template-columns: 1fr; }
+  .auth-left { display: none; }
+}
