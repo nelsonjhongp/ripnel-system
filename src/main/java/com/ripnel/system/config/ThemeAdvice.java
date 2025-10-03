@@ -10,12 +10,11 @@ public class ThemeAdvice {
 
     @ModelAttribute("theme")
     public String theme(HttpServletRequest req) {
-        if (req.getCookies() == null) return "auto";
-        for (Cookie c : req.getCookies()) {
-            if ("theme".equals(c.getName())) {
-                return c.getValue();
+        if (req.getCookies() != null) {
+            for (Cookie c : req.getCookies()) {
+                if ("theme".equals(c.getName())) return c.getValue();
             }
         }
-        return "auto";
+        return "dark"; // <- defecto: oscuro
     }
 }

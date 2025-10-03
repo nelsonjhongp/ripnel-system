@@ -85,3 +85,10 @@ button:hover{ filter:brightness(1.05) }
   .auth-left{ display:none; }
   .auth-right{ padding:32px 16px; }
 }
+
+/* Login: contraste en título y textos con tema oscuro */
+.auth-right .brand h1 { color:#fff !important; }
+.auth-right .card { color: var(--bs-body-color) !important; }
+
+/* si el subtítulo se ve muy tenue, súbelo un poco */
+.auth-right p.text-secondary { color: rgba(255,255,255,.75) !important; }

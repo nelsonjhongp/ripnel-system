@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <title th:text="${mode}=='edit' ? 'Editar usuario · Admin' : 'Nuevo usuario · Admin'">Usuario · Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body th:attr="data-bs-theme=${theme}">
+<div th:replace="~{_nav :: bar(${mode}=='edit' ? 'Editar usuario' : 'Nuevo usuario')}"></div>
+
+<main class="container-xxl py-4">
+  <div class="panel p-4">
+
+    <!-- FORM ÚNICO: crear / editar -->
+    <form th:object="${user}"
+          th:action="@{(${mode}=='edit') ? '/admin/usuarios/' + ${user.id} : '/admin/usuarios'}"
+          method="post" novalidate>
+
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <label class="form-label">Correo</label>
+          <input type="email" class="form-control" th:field="*{email}" required>
+          <div class="text-danger small" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label">Nombre</label>
+          <input type="text" class="form-control" th:field="*{name}" required>
+          <div class="text-danger small" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label class="form-label" th:text="${mode}=='edit' ? 'Contraseña (dejar vacío para NO cambiar)' : 'Contraseña'">Contraseña</label>
+          <input type="text" class="form-control" th:field="*{passwordHash}"
+                 th:placeholder="${mode}=='edit' ? 'Deja en blanco para mantener la actual' : 'Temporal (luego BCrypt)'">
+          <div class="text-danger small" th:if="${#fields.hasErrors('passwordHash')}" th:errors="*{passwordHash}"></div>
+        </div>
+
+        <div class="col-12 col-md-3">
+          <div class="form-check mt-4">
+            <input class="form-check-input" type="checkbox" th:field="*{active}" id="active">
+            <label class="form-check-label" for="active">Activo</label>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Roles</label>
+          <div class="d-flex flex-wrap gap-3">
+            <label class="form-check" th:each="r : ${roles}">
+              <input class="form-check-input" type="checkbox" name="roles"
+                     th:value="${r.id}"
+                     th:checked="${#lists.contains(user.roles, r)}">
+              <span class="form-check-label" th:text="${r.name}">ROL</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <a class="btn btn-outline-secondary" th:href="@{/admin/usuarios}">Cancelar</a>
+        <button class="btn btn-primary" type="submit" th:text="${mode}=='edit' ? 'Actualizar' : 'Guardar'">Guardar</button>
+      </div>
+
+      <div class="alert alert-danger mt-3" th:if="${#fields.hasErrors()}">
+        Revisa los campos marcados en rojo.
+      </div>
+    </form>
+
+  </div>
+</main>
+</body>
+</html>

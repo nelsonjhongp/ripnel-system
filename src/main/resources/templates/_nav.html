@@ -16,7 +16,12 @@
         <li class="nav-item"><a class="nav-link" th:href="@{/admin}">Admin</a></li>
         <li class="nav-item"><a class="nav-link" th:href="@{/almacen/movimientos}">Almacén</a></li>
         <li class="nav-item"><a class="nav-link" th:href="@{/settings}">Ajustes</a></li>
-        <li class="nav-item"><a class="btn btn-sm btn-primary" th:href="@{/logout}">Cerrar sesión</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/usuarios}">Usuarios</a></li>
+        <li class="nav-item">
+          <a class="nav-link text-danger" th:href="@{/logout}">
+            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+          </a>
+        </li>
       </ul>
     </div>
   </div>

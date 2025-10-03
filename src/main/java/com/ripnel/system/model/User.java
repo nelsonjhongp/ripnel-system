@@ -1,41 +1,44 @@
 package com.ripnel.system.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "users") // nombre real de la tabla
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable=false, unique=true)
+    @NotBlank @Email
+    @Column(nullable=false, unique=true, length = 120)
     private String email;
 
-    @Column(name="password_hash", nullable=false)
+    @NotBlank
+    @Size(min = 4, max = 255)
+    @Column(name="password_hash", nullable=false, length = 255)
     private String passwordHash;
 
-    @Column(nullable=false)
+    @NotBlank
+    @Column(nullable=false, length = 120)
     private String name;
 
+    @Column(nullable=false)
     private Boolean active = true;
 
-    // Relación con roles
-    @ManyToMany(fetch = FetchType.EAGER) // o LAZY si quieres diferir la carga
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name = "user_roles", // tabla intermedia
+            name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
 
-    // Método utilitario
     @Transient
     public boolean hasRole(String roleName){
-        if (roles == null) return false;
-        return roles.stream().anyMatch(r -> roleName.equalsIgnoreCase(r.getName()));
+        return roles != null && roles.stream().anyMatch(r -> roleName.equalsIgnoreCase(r.getName()));
     }
 
     // Getters y setters
@@ -56,4 +59,12 @@ public class User {
 
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }
+
+    // equals & hashCode por id (opcional pero recomendado)
+    @Override public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User other)) return false;
+        return id != null && id.equals(other.id);
+    }
+    @Override public int hashCode() { return getClass().hashCode(); }
 }

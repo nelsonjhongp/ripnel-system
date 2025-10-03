@@ -1,16 +1,51 @@
-/* /static/css/app.css */
-:root{
-  --panel: #111827; /* si quieres un panel oscuro personalizado */
+/* ====== Panel Admin ====== */
+.kpi-card.card {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+  border-radius: 1rem;
+}
+.kpi-title {
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--bs-emphasis-color);
+  opacity: .9;
+}
+.kpi-value {
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: 300;
+  color: var(--bs-emphasis-color);
+  opacity: .95;
 }
 
-/* Ajustes globales menores */
-.container { max-width: 1100px; }
+.admin-actions .btn { border-radius: .75rem; }
+.admin-actions .btn-outline-secondary { border-color: var(--bs-border-color); }
+.admin-actions .btn-outline-secondary:hover { background: var(--bs-secondary-bg); }
 
-/* Auth layout (si quieres mantener tu composición anterior) */
-.auth-wrap { min-height: calc(100vh - 56px); display: grid; grid-template-columns: 1fr 1fr; }
-.auth-left { background: url('/img/login-side.jpg') center/cover no-repeat; }
-.auth-right { display: grid; place-items: center; padding: 24px; }
-@media (max-width: 992px){
-  .auth-wrap { grid-template-columns: 1fr; }
-  .auth-left { display: none; }
+.panel {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
 }
+.panel-title {
+  display: inline-block;
+  background: var(--bs-body-bg);
+  color: var(--bs-emphasis-color);
+  font-weight: 600;
+  padding: .25rem .5rem;
+  border-radius: .5rem;
+  border: 1px solid var(--bs-border-color);
+  margin-top: -1rem;
+}
+.table thead th {
+  background: var(--bs-body-bg);
+  color: var(--bs-emphasis-color);
+  border-bottom-color: var(--bs-border-color);
+}
+.table td, .table th { color: var(--bs-body-color); border-color: var(--bs-border-color); }
+
+[data-bs-theme="dark"] .kpi-title,
+[data-bs-theme="dark"] .kpi-value,
+[data-bs-theme="dark"] .panel-title { opacity: .98; }
