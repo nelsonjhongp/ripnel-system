@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>Reposición de stock · RIPNEL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{_nav :: bar('Compras / Reposición')}"></div>
+
+<main class="container my-4">
+    <h1 class="h4 mb-3">
+        Productos con stock bajo
+        <small class="text-secondary fs-6">(menor a <span th:text="${minStock}">5</span> unidades)</small>
+    </h1>
+
+    <div class="alert alert-warning" role="alert">
+        Estos productos requieren reabastecimiento. Usa esta lista como referencia para generar órdenes de compra.
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle table-striped">
+            <thead class="table-light">
+            <tr>
+                <th>Código</th>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th class="text-end">Stock actual</th>
+                <th class="text-center">Acción</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(lowStockList)}">
+                <td colspan="5" class="text-secondary text-center py-4">
+                    Todo correcto 👍 No hay productos por debajo del mínimo.
+                </td>
+            </tr>
+            <tr th:each="p : ${lowStockList}">
+                <td th:text="${p.code}">SKU-001</td>
+                <td th:text="${p.name}">Producto</td>
+                <td th:text="${p.category != null ? p.category.name : '—'}">Categoría</td>
+                <td class="text-end fw-semibold text-danger" th:text="${p.stockQty}">3</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-primary" disabled>Marcar para reponer</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

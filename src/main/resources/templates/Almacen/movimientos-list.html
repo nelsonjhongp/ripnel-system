@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <title>Movimientos de Inventario · RIPNEL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{_nav :: bar('Movimientos de Inventario')}"></div>
+
+<main class="container my-4">
+
+  <div class="row g-4">
+
+    <!-- LISTA DE MOVIMIENTOS -->
+    <div class="col-12 col-lg-7">
+      <div class="card p-3">
+        <h2 class="h6 mb-3">Últimos movimientos</h2>
+
+        <div class="table-responsive">
+          <table class="table align-middle table-striped">
+            <thead class="table-light">
+            <tr>
+              <th>Fecha/Hora</th>
+              <th>Tipo</th>
+              <th>SKU</th>
+              <th>Ubicación</th>
+              <th class="text-end">Cant.</th>
+              <th>Nota</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            <tr th:if="${#lists.isEmpty(movements)}">
+              <td colspan="6" class="text-secondary text-center py-4">
+                Aún no hay movimientos.
+              </td>
+            </tr>
+
+            <tr th:each="m : ${movements}">
+              <td th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm')}">
+                24/10/2025 10:30
+              </td>
+
+              <td>
+                <span class="badge"
+                      th:classappend="${
+                          m.movementType.name()=='IN'      ? ' text-bg-success' :
+                          (m.movementType.name()=='OUT'    ? ' text-bg-danger'  :
+                                                             ' text-bg-secondary')
+                      }"
+                      th:text="${m.movementType}">
+                  IN
+                </span>
+              </td>
+
+              <td th:text="${m.sku}">LEG-SUPLEX-BLK-M</td>
+
+              <td th:text="${m.location != null ? m.location.name : '—'}">
+                Almacén Central
+              </td>
+
+              <td class="text-end fw-semibold"
+                  th:text="${m.quantity}">
+                10
+              </td>
+
+              <td th:text="${m.note}">Ingreso de proveedor</td>
+            </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM NUEVO MOVIMIENTO -->
+    <div class="col-12 col-lg-5">
+      <div class="card p-3">
+        <h2 class="h6 mb-3">Registrar movimiento</h2>
+
+        <form method="post" th:object="${form}" class="vstack gap-3">
+
+          <div>
+            <label class="form-label">Tipo de movimiento</label>
+            <select class="form-select" th:field="*{movementType}" required>
+              <option value="" disabled selected>-- seleccionar --</option>
+              <option th:value="IN">IN (Entrada)</option>
+              <option th:value="OUT">OUT (Salida)</option>
+              <option th:value="TRANSFER">TRANSFER (Traslado)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label">SKU</label>
+            <input class="form-control"
+                   placeholder="LEG-SUPLEX-BLK-M"
+                   th:field="*{sku}" required>
+            <div class="form-text">
+              SKU específico de color+talla.
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">Cantidad</label>
+            <input type="number" min="1" class="form-control"
+                   th:field="*{quantity}" required>
+          </div>
+
+          <div>
+            <label class="form-label">Ubicación</label>
+            <select class="form-select"
+                    th:field="*{locationId}"
+                    required>
+              <option value="" disabled selected>-- seleccionar local --</option>
+              <option th:each="loc : ${locations}"
+                      th:value="${loc.id}"
+                      th:text="${loc.name}">
+                Almacén Central
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label">Nota (opcional)</label>
+            <input class="form-control"
+                   th:field="*{note}"
+                   placeholder="Ingreso de proveedor, salida a vitrina, etc.">
+          </div>
+
+          <div class="text-end">
+            <button class="btn btn-primary" type="submit">
+              Guardar movimiento
+            </button>
+          </div>
+
+        </form>
+
+        <p class="text-secondary small mt-3">
+          Nota: en una siguiente iteración se actualizará el stock por ubicación
+          automáticamente usando este movimiento.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -6,22 +6,59 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-@Controller @RequestMapping("/admin/categories")
+@Controller
+@RequestMapping("/admin/categorias")
 public class CategoryController {
-    private final CategoryRepository repo;
-    public CategoryController(CategoryRepository repo){ this.repo = repo; }
 
-    @GetMapping public String list(Model model){
+    private final CategoryRepository repo;
+
+    public CategoryController(CategoryRepository repo){
+        this.repo = repo;
+    }
+
+    // LISTAR
+    @GetMapping
+    public String list(Model model){
         model.addAttribute("items", repo.findAll());
-        return "admin/categories-list";
+        return "admin/categorias-list";
     }
-    @GetMapping("/new") public String form(Model model){
-        model.addAttribute("category", new Category());
-        return "admin/categories-form";
+
+    // FORM NUEVA
+    @GetMapping("/nuevo")
+    public String formNew(Model model){
+        model.addAttribute("cat", new Category());
+        return "admin/categorias-form";
     }
-    @PostMapping public String save(@ModelAttribute Category c){
-        c.setActive(true);
+
+    // GUARDAR NUEVA
+    @PostMapping
+    public String saveNew(@ModelAttribute("cat") Category c){
+        if (c.getActive() == null) c.setActive(true);
         repo.save(c);
-        return "redirect:/admin/categories";
+        return "redirect:/admin/categorias";
+    }
+
+    // FORM EDITAR
+    @GetMapping("/{id}/editar")
+    public String formEdit(@PathVariable Long id, Model model){
+        Category c = repo.findById(id).orElseThrow();
+        model.addAttribute("cat", c);
+        return "admin/categorias-form";
+    }
+
+    // GUARDAR CAMBIOS
+    @PostMapping("/{id}")
+    public String saveEdit(@PathVariable Long id, @ModelAttribute("cat") Category c){
+        c.setId(id);
+        if (c.getActive() == null) c.setActive(true);
+        repo.save(c);
+        return "redirect:/admin/categorias";
+    }
+
+    // ELIMINAR
+    @PostMapping("/{id}/eliminar")
+    public String delete(@PathVariable Long id){
+        repo.deleteById(id);
+        return "redirect:/admin/categorias";
     }
 }

@@ -23,7 +23,10 @@ public class AuthController {
                             .anyMatch(r -> "ADMIN".equalsIgnoreCase(r.getName()));
                     return isAdmin ? "redirect:/admin" : "redirect:/home";
                 })
-                .orElseGet(() -> { model.addAttribute("error", "Credenciales inválidas"); return "login";});
+                .orElseGet(() -> {
+                    model.addAttribute("error", "Credenciales inválidas");
+                    return "login";
+                });
     }
 
     @GetMapping("/logout")

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <title>Productos · RIPNEL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Tus estilos globales -->
+  <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+
+<body th:attr="data-bs-theme=${theme=='auto' ? null : theme}">
+<div th:replace="~{_nav :: bar('Productos')}"></div>
+
+<main class="container-xxl py-4">
+
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+      <h1 class="h4 mb-1">Productos</h1>
+      <div class="text-secondary small">
+        Catálogo de prendas con precio y stock actual.
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-secondary" th:href="@{/admin}">
+        ← Volver al panel
+      </a>
+      <a class="btn btn-primary" th:href="@{/admin/productos/nuevo}">
+        + Nuevo producto
+      </a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm" style="background-color:var(--bs-body-bg);">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-dark">
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th class="text-end">Precio (S/)</th>
+          <th class="text-end">Stock</th>
+          <th>Activo</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <!-- caso sin productos -->
+        <tr th:if="${#lists.isEmpty(items)}">
+          <td colspan="7" class="text-secondary py-4 text-center">
+            No hay productos registrados.
+          </td>
+        </tr>
+
+        <!-- iteración de productos -->
+        <tr th:each="p : ${items}">
+          <td th:text="${p.code}">P-0001</td>
+          <td th:text="${p.name}">Polo negro talla M</td>
+          <td th:text="${p.category != null ? p.category.name : '—'}">Polos</td>
+
+          <!-- precio corregido -->
+          <td class="text-end" th:text="'S/ ' + ${p.price}">S/ 49.90</td>
+
+          <td class="text-end" th:text="${p.stockQty}">10</td>
+
+          <td>
+    <span class="badge"
+          th:classappend="${p.active} ? ' text-bg-success' : ' text-bg-secondary'"
+          th:text="${p.active} ? 'Sí' : 'No'">
+      Sí
+    </span>
+          </td>
+
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-primary me-1"
+               th:href="@{|/admin/productos/${p.id}/editar|}">
+              Editar
+            </a>
+
+            <a class="btn btn-sm btn-outline-secondary"
+               th:href="@{'/admin/productos/' + ${p.id} + '/variantes'}">
+              Variantes
+            </a>
+
+            <form th:action="@{|/admin/productos/${p.id}/eliminar|}"
+                  method="post" style="display:inline-block">
+              <button class="btn btn-sm btn-outline-danger"
+                      type="submit"
+                      onclick="return confirm('¿Eliminar este producto?')">
+                Eliminar
+              </button>
+            </form>
+          </td>
+        </tr>
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
