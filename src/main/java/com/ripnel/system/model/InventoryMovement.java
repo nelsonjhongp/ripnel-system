@@ -11,34 +11,32 @@ public class InventoryMovement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // cuándo pasó
-    @Column(name = "created_at", nullable = false)
+    @Column(name="created_at", nullable=false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // tipo: IN / OUT / TRANSFER
     @Enumerated(EnumType.STRING)
-    @Column(name = "movement_type", nullable = false, length = 20)
-    private MovementType movementType;
+    @Column(name="movement_type", nullable=false, length=20)
+    private MovementType movementType; // IN, OUT, TRANSFER
 
-    // qué SKU tocamos (ej: "LEG-SUPLEX-BLK-M")
-    @Column(name = "sku", nullable = false, length = 80)
-    private String sku;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "variant_id")
+    private ProductVariant variant; // <- importante: ya no usamos sku suelto
 
-    // a qué local le afecta este stock
     @ManyToOne
     @JoinColumn(name = "location_id")
-    private Location location;
+    private Location location; // desde / hacia dónde aplica este ajuste
 
-    // cuántas unidades entraron o salieron
-    @Column(nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "transfer_to_location_id")
+    private Location transferToLocation;
+
+    @Column(nullable=false)
     private Integer quantity;
 
-    // nota tipo "recepción de proveedor", "salida para vitrina", etc
-    @Column(length = 255)
+    @Column(length=255)
     private String note;
 
     // getters/setters
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -48,11 +46,19 @@ public class InventoryMovement {
     public MovementType getMovementType() { return movementType; }
     public void setMovementType(MovementType movementType) { this.movementType = movementType; }
 
-    public String getSku() { return sku; }
-    public void setSku(String sku) { this.sku = sku; }
+    public ProductVariant getVariant() { return variant; }
+    public void setVariant(ProductVariant variant) { this.variant = variant; }
 
     public Location getLocation() { return location; }
     public void setLocation(Location location) { this.location = location; }
+
+    public Location getTransferToLocation() {
+        return transferToLocation;
+    }
+
+    public void setTransferToLocation(Location transferToLocation) {
+        this.transferToLocation = transferToLocation;
+    }
 
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }

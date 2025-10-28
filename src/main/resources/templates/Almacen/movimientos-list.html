@@ -4,83 +4,126 @@
   <meta charset="utf-8">
   <title>Movimientos de Inventario · RIPNEL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap -->
+  <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+  <!-- Tus estilos -->
   <link th:href="@{/css/app.css}" rel="stylesheet">
 </head>
-<body>
+
+<body th:attr="data-bs-theme=${theme}">
+<!-- NAV SUPERIOR -->
 <div th:replace="~{_nav :: bar('Movimientos de Inventario')}"></div>
 
-<main class="container my-4">
+<main class="container-xxl py-4">
 
+  <!-- fila principal -->
   <div class="row g-4">
 
-    <!-- LISTA DE MOVIMIENTOS -->
-    <div class="col-12 col-lg-7">
+    <!-- ============================
+         COL IZQUIERDA: HISTORIAL
+         ============================ -->
+    <section class="col-12 col-lg-7">
       <div class="card p-3">
-        <h2 class="h6 mb-3">Últimos movimientos</h2>
+        <div class="d-flex justify-content-between align-items-start flex-wrap">
+          <div>
+            <h2 class="h6 mb-1">Últimos movimientos</h2>
+            <div class="text-secondary small">
+              Historial de entradas / salidas de stock (máx. 20 más recientes)
+            </div>
+          </div>
 
-        <div class="table-responsive">
+          <!-- Mensaje de éxito opcional -->
+          <div th:if="${param.ok}" class="text-success small fw-semibold">
+            Movimiento guardado ✓
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3">
           <table class="table align-middle table-striped">
             <thead class="table-light">
             <tr>
               <th>Fecha/Hora</th>
               <th>Tipo</th>
               <th>SKU</th>
+              <th>Producto</th>
               <th>Ubicación</th>
               <th class="text-end">Cant.</th>
               <th>Nota</th>
             </tr>
             </thead>
+
             <tbody>
-
             <tr th:if="${#lists.isEmpty(movements)}">
-              <td colspan="6" class="text-secondary text-center py-4">
-                Aún no hay movimientos.
+              <td colspan="7" class="text-secondary text-center py-4">
+                Aún no hay movimientos registrados.
               </td>
             </tr>
 
-            <tr th:each="m : ${movements}">
-              <td th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm')}">
-                24/10/2025 10:30
+            <tr th:each="m : ${movements}" th:unless="${#lists.isEmpty(movements)}" class="align-middle">
+              <td class="text-nowrap" style="vertical-align: middle;">
+                <div th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm')}">
+                  24/10/2025 10:30
+                </div>
               </td>
 
-              <td>
-                <span class="badge"
-                      th:classappend="${
-                          m.movementType.name()=='IN'      ? ' text-bg-success' :
-                          (m.movementType.name()=='OUT'    ? ' text-bg-danger'  :
-                                                             ' text-bg-secondary')
-                      }"
-                      th:text="${m.movementType}">
-                  IN
-                </span>
+              <td style="vertical-align: middle;">
+    <span class="badge"
+          th:classappend="${
+              m.movementType.name()=='IN'      ? ' text-bg-success' :
+              (m.movementType.name()=='OUT'    ? ' text-bg-danger'  :
+                                                 ' text-bg-secondary')
+          }"
+          th:text="${m.movementType}">
+      IN
+    </span>
               </td>
 
-              <td th:text="${m.sku}">LEG-SUPLEX-BLK-M</td>
-
-              <td th:text="${m.location != null ? m.location.name : '—'}">
-                Almacén Central
+              <td style="vertical-align: middle;">
+                <div class="fw-semibold" th:text="${m.variant.sku}">LEG-SUPLEX-RED-S</div>
               </td>
 
-              <td class="text-end fw-semibold"
+              <td style="vertical-align: middle;">
+                <div class="fw-semibold" th:text="${m.variant.product.name}">Leggings Deportivo Suplex</div>
+                <div class="text-secondary small"
+                     th:text="${m.variant.color.name + ' / ' + m.variant.size.code}">
+                  Red / S
+                </div>
+              </td>
+
+              <td style="vertical-align: middle;">
+                <div th:text="${m.location != null ? m.location.name : '—'}">Main Warehouse</div>
+              </td>
+
+              <td class="text-end fw-semibold" style="vertical-align: middle;"
                   th:text="${m.quantity}">
-                10
+                2
               </td>
 
-              <td th:text="${m.note}">Ingreso de proveedor</td>
+              <td style="vertical-align: middle;" th:text="${m.note}">
+                Ingreso proveedor
+              </td>
             </tr>
-
             </tbody>
           </table>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- FORM NUEVO MOVIMIENTO -->
-    <div class="col-12 col-lg-5">
+    <!-- ============================
+         COL DERECHA: FORMULARIO
+         ============================ -->
+    <section class="col-12 col-lg-5">
       <div class="card p-3">
-        <h2 class="h6 mb-3">Registrar movimiento</h2>
+        <h2 class="h6 mb-1">Registrar movimiento</h2>
+        <div class="text-secondary small mb-3">
+          IN = entra stock | OUT = sale stock | TRANSFER = traslado interno
+        </div>
 
+        <!-- FORM -->
         <form method="post" th:object="${form}" class="vstack gap-3">
 
           <div>
@@ -94,12 +137,17 @@
           </div>
 
           <div>
-            <label class="form-label">SKU</label>
-            <input class="form-control"
-                   placeholder="LEG-SUPLEX-BLK-M"
-                   th:field="*{sku}" required>
+            <label class="form-label">Variante / SKU</label>
+            <select class="form-select" th:field="*{variantId}" required>
+              <option value="" disabled selected>-- seleccionar SKU/color/talla --</option>
+              <option th:each="v : ${variants}"
+                      th:value="${v.id}"
+                      th:text="${v.sku + ' · ' + v.product.name + ' · ' + v.color.name + ' / ' + v.size.code}">
+                SKU - Producto - Color/Talla
+              </option>
+            </select>
             <div class="form-text">
-              SKU específico de color+talla.
+              Esto identifica color+talla exacta.
             </div>
           </div>
 
@@ -127,7 +175,7 @@
             <label class="form-label">Nota (opcional)</label>
             <input class="form-control"
                    th:field="*{note}"
-                   placeholder="Ingreso de proveedor, salida a vitrina, etc.">
+                   placeholder="Ingreso proveedor / salida a vitrina / traslado a tienda...">
           </div>
 
           <div class="text-end">
@@ -138,15 +186,19 @@
 
         </form>
 
-        <p class="text-secondary small mt-3">
-          Nota: en una siguiente iteración se actualizará el stock por ubicación
-          automáticamente usando este movimiento.
-        </p>
+        <hr class="my-4">
+
+        <!-- mini info -->
+        <div class="small text-secondary">
+          Esta pantalla es usada por almacén.
+          Cada salida (OUT) reduce stock de esa variante.
+          Cada entrada (IN) aumenta stock.
+          Transfer todavía no ajusta stock por ubicación, eso viene en otra iteración.
+        </div>
       </div>
-    </div>
+    </section>
 
-  </div>
-
+  </div><!-- row -->
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

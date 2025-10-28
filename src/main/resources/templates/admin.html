@@ -15,23 +15,25 @@
 
 <main class="container-xxl py-4">
     <!-- KPIs -->
-    <div class="row g-4 mb-2">
+    <div class="row g-3 mb-4">
         <div class="col-12 col-md-4">
-            <div class="card kpi-card p-4">
-                <div class="kpi-title">Categorías</div>
-                <div class="kpi-value">[[${categoriesCount}?:0]]</div>
+            <div class="p-3 border rounded">
+                <div class="text-secondary small">Categorías</div>
+                <div class="fs-4 fw-semibold" th:text="${countCategories}">12</div>
             </div>
         </div>
+
         <div class="col-12 col-md-4">
-            <div class="card kpi-card p-4">
-                <div class="kpi-title">Productos</div>
-                <div class="kpi-value">[[${productsCount}?:0]]</div>
+            <div class="p-3 border rounded">
+                <div class="text-secondary small">Productos</div>
+                <div class="fs-4 fw-semibold" th:text="${countProducts}">58</div>
             </div>
         </div>
+
         <div class="col-12 col-md-4">
-            <div class="card kpi-card p-4">
-                <div class="kpi-title">Movimientos (7d)</div>
-                <div class="kpi-value">[[${movs7d}?:0]]</div>
+            <div class="p-3 border rounded">
+                <div class="text-secondary small">Movimientos últimos 7 días</div>
+                <div class="fs-4 fw-semibold" th:text="${countMovements7d}">34</div>
             </div>
         </div>
     </div>
@@ -60,29 +62,64 @@
         <span class="panel-title">Últimos movimientos</span>
 
         <div class="table-responsive mt-3">
-            <table class="table align-middle">
+            <table class="table table-sm align-middle">
                 <thead>
                 <tr>
-                    <th>Fecha</th>
+                    <th>Fecha/Hora</th>
                     <th>Tipo</th>
+                    <th>SKU</th>
                     <th>Producto</th>
-                    <th>Cant.</th>
+                    <th>Ubicación</th>
+                    <th class="text-end">Cant.</th>
                     <th>Nota</th>
                 </tr>
                 </thead>
+
                 <tbody>
                 <tr th:if="${#lists.isEmpty(recentMovements)}">
-                    <td colspan="5" class="text-secondary">Sin movimientos recientes.</td>
-                </tr>
-                <tr th:each="m : ${recentMovements}">
-                    <td th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm')}">01/10/2025 12:00</td>
-                    <td>
-            <span class="badge" th:classappend="${m.type.name()=='IN' ? ' text-bg-success' : ' text-bg-danger'}"
-                  th:text="${m.type.name()}">IN</span>
+                    <td colspan="7" class="text-secondary text-center py-4">
+                        No hay movimientos recientes.
                     </td>
-                    <td th:text="${m.product!=null ? m.product.name : '—'}">Producto X</td>
-                    <td th:text="${m.quantity}">0</td>
-                    <td th:text="${m.note}">—</td>
+                </tr>
+
+                <tr th:each="m : ${recentMovements}">
+                    <!-- fecha -->
+                    <td th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm')}">
+                        28/10/2025 15:49
+                    </td>
+
+                    <!-- badge tipo -->
+                    <td>
+            <span class="badge"
+                  th:classappend="${
+                        m.movementType.name() == 'IN' ? ' text-bg-success' :
+                        (m.movementType.name() == 'OUT' ? ' text-bg-danger' : ' text-bg-secondary')
+                  }"
+                  th:text="${m.movementType}">
+                IN
+            </span>
+                    </td>
+
+                    <!-- sku -->
+                    <td class="small">
+                        <div class="fw-semibold" th:text="${m.variant.sku}">LEG-SUPLEX-RED-S</div>
+                        <div class="text-secondary"
+                             th:text="${m.variant.product.name + ' · ' + m.variant.color.name + ' / ' + m.variant.size.code}">
+                            Leggings Deportivo Suplex · Red / S
+                        </div>
+                    </td>
+
+                    <!-- producto -->
+                    <td th:text="${m.variant.product.name}">Leggings Deportivo Suplex</td>
+
+                    <!-- ubicación -->
+                    <td th:text="${m.location != null ? m.location.name : '—'}">Main Warehouse</td>
+
+                    <!-- cantidad -->
+                    <td class="text-end fw-semibold" th:text="${m.quantity}">2</td>
+
+                    <!-- nota -->
+                    <td th:text="${m.note}">Ingreso proveedor</td>
                 </tr>
                 </tbody>
             </table>

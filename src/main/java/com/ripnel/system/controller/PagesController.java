@@ -24,25 +24,20 @@ public class PagesController {
     private InventoryMovementRepository movementRepo;
 
     @GetMapping("/admin")
-    public String admin(Model model, HttpSession session){
-
-        // Protección básica: si no estás logueado, no entras
-        if (session.getAttribute("USER") == null) {
-            return "redirect:/login";
-        }
+    public String admin(Model model, HttpSession s){
+        if (s.getAttribute("USER")==null) return "redirect:/login";
 
         long cats  = categoryRepo.count();
         long prods = productRepo.count();
         long mov7d = movementRepo.countSince(LocalDateTime.now().minusDays(7));
 
-        // Estos nombres deben MATCHEAR con admin.html
-        model.addAttribute("categoriesCount", cats);
-        model.addAttribute("productsCount", prods);
-        model.addAttribute("movs7d", mov7d);
+        model.addAttribute("countCategories", cats);
+        model.addAttribute("countProducts", prods);
+        model.addAttribute("countMovements7d", mov7d);
 
         model.addAttribute("recentMovements", movementRepo.findTop5ByOrderByCreatedAtDesc());
 
-        return "admin"; // templates/admin.html
+        return "admin";
     }
 
     @GetMapping("/home")

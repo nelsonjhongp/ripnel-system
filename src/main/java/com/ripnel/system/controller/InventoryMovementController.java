@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Controller
 @RequestMapping("/almacen/movimientos")
 public class InventoryMovementController {
-
+/*
     private final InventoryMovementRepository movRepo;
     private final LocationRepository locationRepo;
 
@@ -101,4 +101,5 @@ public class InventoryMovementController {
         public String getNote() { return note; }
         public void setNote(String note) { this.note = note; }
     }
+    */
 }
