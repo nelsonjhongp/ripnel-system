@@ -2,129 +2,298 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8">
-    <title>RIPNEL · Admin</title>
+    <title>RIPNEL · Panel Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Estilos propios -->
     <link th:href="@{/css/app.css}" rel="stylesheet">
 </head>
 <body th:attr="data-bs-theme=${theme}">
+
 <!-- NAV -->
 <div th:replace="~{_nav :: bar('Panel de administración')}"></div>
 
 <main class="container-xxl py-4">
-    <!-- KPIs -->
+
+    <!-- ========================= -->
+    <!-- KPIs PRINCIPALES          -->
+    <!-- ========================= -->
     <div class="row g-3 mb-4">
-        <div class="col-12 col-md-4">
-            <div class="p-3 border rounded">
+
+        <!-- Categorías -->
+        <div class="col-12 col-md-4 col-xl-2">
+            <div class="p-3 border rounded h-100">
                 <div class="text-secondary small">Categorías</div>
-                <div class="fs-4 fw-semibold" th:text="${countCategories}">12</div>
+                <div class="fs-4 fw-semibold" th:text="${countCategories}">0</div>
             </div>
         </div>
 
-        <div class="col-12 col-md-4">
-            <div class="p-3 border rounded">
+        <!-- Productos -->
+        <div class="col-12 col-md-4 col-xl-2">
+            <div class="p-3 border rounded h-100">
                 <div class="text-secondary small">Productos</div>
-                <div class="fs-4 fw-semibold" th:text="${countProducts}">58</div>
+                <div class="fs-4 fw-semibold" th:text="${countProducts}">0</div>
             </div>
         </div>
 
-        <div class="col-12 col-md-4">
-            <div class="p-3 border rounded">
+        <!-- Stock total -->
+        <div class="col-12 col-md-4 col-xl-2">
+            <div class="p-3 border rounded h-100">
+                <div class="text-secondary small">Stock total (unidades)</div>
+                <div class="fs-4 fw-semibold" th:text="${totalStockQty}">0</div>
+            </div>
+        </div>
+
+        <!-- Ventas 7 días -->
+        <div class="col-12 col-md-4 col-xl-2">
+            <div class="p-3 border rounded h-100">
+                <div class="text-secondary small">Ventas últimos 7 días (S/)</div>
+                <div class="fs-4 fw-semibold">
+                    <span th:text="${totalSales7d}">0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movimientos 7 días -->
+        <div class="col-12 col-md-4 col-xl-2">
+            <div class="p-3 border rounded h-100">
                 <div class="text-secondary small">Movimientos últimos 7 días</div>
-                <div class="fs-4 fw-semibold" th:text="${countMovements7d}">34</div>
+                <div class="fs-4 fw-semibold" th:text="${countMovements7d}">0</div>
+            </div>
+        </div>
+
+        <!-- Insumos críticos -->
+        <div class="col-12 col-md-4 col-xl-2">
+            <div class="p-3 border rounded h-100">
+                <div class="text-secondary small">Insumos críticos</div>
+                <div class="fs-4 fw-semibold" th:text="${countCriticalMaterials}">0</div>
             </div>
         </div>
     </div>
 
-    <!-- Acciones rápidas -->
-    <div class="admin-actions d-flex flex-wrap gap-2 mb-4">
-        <a class="btn btn-primary" th:href="@{/admin/categorias}">Ver categorías</a>
-        <a class="btn btn-outline-primary" th:href="@{/admin/categorias/nuevo}">Nueva categoría</a>
+    <!-- ========================= -->
+    <!-- GRÁFICOS (UNA SOLA FILA) -->
+    <!-- ========================= -->
+    <div class="row g-3 my-4">
 
-        <a class="btn btn-outline-secondary" th:href="@{/admin/productos}">Ver productos</a>
-        <a class="btn btn-outline-secondary" th:href="@{/admin/productos/nuevo}">Nuevo producto</a>
+        <!-- Ventas últimos 7 días -->
+        <div class="col-12 col-lg-4">
+            <div class="card p-3">
+                <span class="h6">Ventas últimos 7 días</span>
+                <canvas id="chartSales7d" height="110"></canvas>
+            </div>
+        </div>
 
-        <a class="btn btn-outline-secondary" th:href="@{/almacen/movimientos}">Mov. inventario</a>
+        <!-- Stock por categoría -->
+        <div class="col-12 col-lg-4">
+            <div class="card p-3">
+                <span class="h6">Stock por categoría</span>
+                <canvas id="chartStockCategory" height="110"></canvas>
+            </div>
+        </div>
 
-        <!-- Usuario / CRUD -->
-        <a class="btn btn-dark" th:href="@{/admin/usuarios}">
-            Usuarios
-        </a>
-        <a class="btn btn-outline-dark" th:href="@{/admin/usuarios/nuevo}">
-            Nuevo usuario
-        </a>
-    </div>
-
-    <!-- Últimos movimientos -->
-    <div class="panel p-4">
-        <span class="panel-title">Últimos movimientos</span>
-
-        <div class="table-responsive mt-3">
-            <table class="table table-sm align-middle">
-                <thead>
-                <tr>
-                    <th>Fecha/Hora</th>
-                    <th>Tipo</th>
-                    <th>SKU</th>
-                    <th>Producto</th>
-                    <th>Ubicación</th>
-                    <th class="text-end">Cant.</th>
-                    <th>Nota</th>
-                </tr>
-                </thead>
-
-                <tbody>
-                <tr th:if="${#lists.isEmpty(recentMovements)}">
-                    <td colspan="7" class="text-secondary text-center py-4">
-                        No hay movimientos recientes.
-                    </td>
-                </tr>
-
-                <tr th:each="m : ${recentMovements}">
-                    <!-- fecha -->
-                    <td th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm')}">
-                        28/10/2025 15:49
-                    </td>
-
-                    <!-- badge tipo -->
-                    <td>
-            <span class="badge"
-                  th:classappend="${
-                        m.movementType.name() == 'IN' ? ' text-bg-success' :
-                        (m.movementType.name() == 'OUT' ? ' text-bg-danger' : ' text-bg-secondary')
-                  }"
-                  th:text="${m.movementType}">
-                IN
-            </span>
-                    </td>
-
-                    <!-- sku -->
-                    <td class="small">
-                        <div class="fw-semibold" th:text="${m.variant.sku}">LEG-SUPLEX-RED-S</div>
-                        <div class="text-secondary"
-                             th:text="${m.variant.product.name + ' · ' + m.variant.color.name + ' / ' + m.variant.size.code}">
-                            Leggings Deportivo Suplex · Red / S
-                        </div>
-                    </td>
-
-                    <!-- producto -->
-                    <td th:text="${m.variant.product.name}">Leggings Deportivo Suplex</td>
-
-                    <!-- ubicación -->
-                    <td th:text="${m.location != null ? m.location.name : '—'}">Main Warehouse</td>
-
-                    <!-- cantidad -->
-                    <td class="text-end fw-semibold" th:text="${m.quantity}">2</td>
-
-                    <!-- nota -->
-                    <td th:text="${m.note}">Ingreso proveedor</td>
-                </tr>
-                </tbody>
-            </table>
+        <!-- Top productos últimos 30 días -->
+        <div class="col-12 col-lg-4">
+            <div class="card p-3">
+                <span class="h6">Top productos últimos 30 días</span>
+                <canvas id="chartTopProducts" height="110"></canvas>
+            </div>
         </div>
     </div>
+    <script id="dailyLabelsJson" type="application/json"
+            th:utext="${dailyLabels}">[]</script>
+
+    <script id="dailyValuesJson" type="application/json"
+            th:utext="${dailyValues}">[]</script>
+
+    <script id="catLabelsJson" type="application/json"
+            th:utext="${catLabels}">[]</script>
+
+    <script id="catValuesJson" type="application/json"
+            th:utext="${catValues}">[]</script>
+
+    <script id="topLabelsJson" type="application/json"
+            th:utext="${topLabelsJson}">[]</script>
+
+    <script id="topQtysJson" type="application/json"
+            th:utext="${topQtysJson}">[]</script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:src="@{/js/dashboard.js}"></script>
+    <div class="row g-4">
+
+        <!-- ========================= -->
+        <!-- TOP PRODUCTOS 30 DÍAS     -->
+        <!-- ========================= -->
+        <section class="col-12 col-xl-6">
+            <div class="card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="h6 mb-0">Top productos (últimos 30 días)</span>
+                    <span class="text-secondary small">por unidades vendidas</span>
+                </div>
+
+                <div th:if="${#lists.isEmpty(topProducts30d)}" class="text-secondary small">
+                    Aún no hay datos suficientes de ventas.
+                </div>
+
+                <div th:each="tp : ${topProducts30d}" class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="small" th:text="${tp.label}">Producto</span>
+                        <span class="small fw-semibold">
+                            <span th:text="${tp.qty}">0</span> u
+                            ·
+                            <span th:text="${#numbers.formatDecimal(tp.percent, 1, 'COMMA', 1, 'POINT')}">0.0</span>%
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar"
+                             role="progressbar"
+                             th:style="'width:' + ${tp.percent} + '%;'">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================= -->
+        <!-- ALERTAS                   -->
+        <!-- ========================= -->
+        <section class="col-12 col-xl-6">
+            <div class="card p-3 h-100">
+                <span class="h6 mb-2">Alertas del sistema</span>
+
+                <!-- Insumos críticos -->
+                <div class="mb-3">
+                    <div class="fw-semibold small mb-1">Insumos bajo stock mínimo</div>
+                    <div th:if="${#lists.isEmpty(criticalMaterials)}" class="text-secondary small">
+                        No hay insumos críticos por ahora.
+                    </div>
+                    <ul class="list-group list-group-flush small" th:if="${!#lists.isEmpty(criticalMaterials)}">
+                        <li class="list-group-item px-0 py-1"
+                            th:each="m : ${criticalMaterials}">
+                            <span class="fw-semibold" th:text="${m.name}">Tela X</span>
+                            · Stock:
+                            <span th:text="${m.stockQty}">0</span>
+                            <span> / Mín:</span>
+                            <span th:text="${m.minStock}">0</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Órdenes abiertas antiguas -->
+                <div class="mb-3">
+                    <div class="fw-semibold small mb-1">Órdenes de compra abiertas</div>
+                    <div th:if="${#lists.isEmpty(oldOpenOrders)}" class="text-secondary small">
+                        No hay órdenes abiertas pendientes.
+                    </div>
+                    <ul class="list-group list-group-flush small" th:if="${!#lists.isEmpty(oldOpenOrders)}">
+                        <li class="list-group-item px-0 py-1"
+                            th:each="oc : ${oldOpenOrders}">
+                            <span class="fw-semibold" th:text="${oc.number}">OC-0001</span>
+                            · Proveedor:
+                            <span th:text="${oc.supplier != null ? oc.supplier.name : '—'}">Proveedor</span>
+                            · Fecha:
+                            <span th:text="${oc.orderedAt}">2025-11-01</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Variantes sin stock -->
+                <div>
+                    <div class="fw-semibold small mb-1">Productos sin stock</div>
+                    <div th:if="${#lists.isEmpty(zeroStockVariants)}" class="text-secondary small">
+                        No se detectaron variantes con stock cero.
+                    </div>
+                    <ul class="list-group list-group-flush small" th:if="${!#lists.isEmpty(zeroStockVariants)}">
+                        <li class="list-group-item px-0 py-1"
+                            th:each="v : ${zeroStockVariants}">
+                            <span class="fw-semibold" th:text="${v.sku}">SKU-001</span>
+                            ·
+                            <span th:text="${v.product.name}">Producto</span>
+                            · Stock:
+                            <span th:text="${v.stockQty}">0</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+    </div>
+
+    <!-- ========================= -->
+    <!-- MOVIMIENTOS RECIENTES     -->
+    <!-- ========================= -->
+    <section class="mt-4">
+        <div class="panel p-4">
+            <span class="panel-title h6">Últimos movimientos de inventario</span>
+
+            <div class="table-responsive mt-3">
+                <table class="table table-sm align-middle">
+                    <thead>
+                    <tr>
+                        <th>Fecha/Hora</th>
+                        <th>Tipo</th>
+                        <th>SKU</th>
+                        <th>Producto</th>
+                        <th>Ubicación</th>
+                        <th class="text-end">Cant.</th>
+                        <th>Nota</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(recentMovements)}">
+                        <td colspan="7" class="text-secondary text-center py-4">
+                            No hay movimientos recientes.
+                        </td>
+                    </tr>
+
+                    <tr th:each="m : ${recentMovements}">
+                        <!-- fecha -->
+                        <td th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm')}">
+                            28/10/2025 15:49
+                        </td>
+
+                        <!-- badge tipo -->
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${
+                                        m.movementType.name() == 'IN' ? ' text-bg-success' :
+                                        (m.movementType.name() == 'OUT' ? ' text-bg-danger' : ' text-bg-secondary')
+                                  }"
+                                  th:text="${m.movementType}">
+                                IN
+                            </span>
+                        </td>
+
+                        <!-- sku + detalle -->
+                        <td class="small">
+                            <div class="fw-semibold" th:text="${m.variant.sku}">LEG-SUPLEX-RED-S</div>
+                            <div class="text-secondary"
+                                 th:text="${m.variant.product.name + ' · ' + m.variant.color.name + ' / ' + m.variant.size.code}">
+                                Leggings Deportivo Suplex · Red / S
+                            </div>
+                        </td>
+
+                        <!-- producto -->
+                        <td th:text="${m.variant.product.name}">Leggings Deportivo Suplex</td>
+
+                        <!-- ubicación -->
+                        <td th:text="${m.location != null ? m.location.name : '—'}">Main Warehouse</td>
+
+                        <!-- cantidad -->
+                        <td class="text-end fw-semibold" th:text="${m.quantity}">2</td>
+
+                        <!-- nota -->
+                        <td th:text="${m.note}">Ingreso proveedor</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

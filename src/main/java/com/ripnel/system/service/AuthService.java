@@ -2,21 +2,44 @@ package com.ripnel.system.service;
 
 import com.ripnel.system.model.User;
 import com.ripnel.system.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
 public class AuthService {
-    private final UserRepository userRepo;
-    public AuthService(UserRepository userRepo) { this.userRepo = userRepo; }
 
-    // Para el Sprint 1 usamos password en texto plano (luego pasamos a BCrypt)
-    public Optional<User> login(String email, String rawPassword) {
-        var found = userRepo.findByEmailAndActiveTrue(email);
-        System.out.println("LOGIN email=" + email + " existe=" + found.isPresent());
-        found.ifPresent(u -> System.out.println("PW_BD=" + u.getPasswordHash() + " PW_IN=" + rawPassword));
-        return found.filter(u -> Objects.equals(u.getPasswordHash(), rawPassword));
+    @Autowired
+    private UserRepository userRepository;
+
+    public User login(String email, String password) {
+
+        System.out.println(">>> email recibido = '" + email + "'");
+        System.out.println(">>> password recibido = '" + password + "'");
+
+        Optional<User> opt = userRepository.findByEmail(email);
+
+        if (opt.isEmpty()) {
+            System.out.println(">>> Usuario no encontrado");
+            return null;
+        }
+
+        User user = opt.get();
+
+        System.out.println(">>> password en BD = '" + user.getPasswordHash() + "'");
+
+        if (user.getActive() == null || !user.getActive()) {
+            System.out.println(">>> Usuario inactivo");
+            return null;
+        }
+
+        if (!password.equals(user.getPasswordHash())) {
+            System.out.println(">>> PASSWORD NO COINCIDE");
+            return null;
+        }
+
+        System.out.println(">>> LOGIN OK !!!!");
+        return user;
     }
 }

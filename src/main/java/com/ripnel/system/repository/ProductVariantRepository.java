@@ -3,15 +3,22 @@ package com.ripnel.system.repository;
 import com.ripnel.system.model.Product;
 import com.ripnel.system.model.ProductVariant;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+
 import java.util.List;
 
-@Repository
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, Long> {
 
-    ProductVariant findBySku(String sku);
+    @Query("select coalesce(sum(v.stockQty), 0) from ProductVariant v")
+    Long sumGlobalStockQty();
 
-    List<ProductVariant> findByActiveTrue();
+    List<ProductVariant> findTop5ByStockQtyLessThanEqualOrderByStockQtyAsc(Long qty);
 
     List<ProductVariant> findByProductAndActiveTrueOrderByColor_NameAscSize_CodeAsc(Product product);
+
+    @Query("SELECT v.product.category.name, SUM(v.stockQty) " +
+            "FROM ProductVariant v " +
+            "GROUP BY v.product.category.name " +
+            "ORDER BY 2 DESC")
+    List<Object[]> getStockByCategory();
 }

@@ -1,31 +1,197 @@
 <!-- /templates/_nav.html -->
-<nav th:fragment="bar(title='Panel')" class="navbar navbar-expand-lg border-bottom px-3"
+<nav th:fragment="bar(title='Panel')"
+     class="navbar navbar-expand-lg border-bottom px-3"
      style="--bs-border-color: rgba(0,0,0,.08); background: var(--bs-body-bg)">
   <div class="container-fluid">
+
+    <!-- TITULO + LOGO -->
     <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/}">
-      <img th:src="@{/img/ripnel-logo.svg}" alt="RIPNEL" height="24" onerror="this.style.display='none'">
-      <span class="fw-semibold">RIPNEL</span>
-      <span class="text-secondary">·</span>
+      <img th:src="@{/img/login-side.png}" alt="RIPNEL" height="24"
+           onerror="this.style.display='none'">
       <span class="text-secondary" th:text="${title}">Panel</span>
     </a>
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topbar">
       <span class="navbar-toggler-icon"></span>
     </button>
+
     <div id="topbar" class="collapse navbar-collapse">
-      <ul class="navbar-nav ms-auto align-items-center gap-2">
-        <li class="nav-item"><a class="nav-link" th:href="@{/admin}">Admin</a></li>
-        <li class="nav-item"><a class="nav-link" th:href="@{/almacen/movimientos}">Almacén</a></li>
-        <li class="nav-item">
-          <a class="nav-link" th:href="@{/compras/reabastecer}">Compras</a>
-        </li>
-        <li class="nav-item"><a class="nav-link" th:href="@{/settings}">Ajustes</a></li>
-        <li class="nav-item"><a class="nav-link" th:href="@{/admin/usuarios}">Usuarios</a></li>
-        <li class="nav-item">
-          <a class="nav-link text-danger" th:href="@{/logout}">
-            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
-          </a>
-        </li>
-      </ul>
+
+      <!-- USAR LA SESIÓN CORRECTA -->
+      <th:block th:with="u=${session.USER}">
+
+        <ul class="navbar-nav ms-auto align-items-center gap-3">
+
+          <!-- ========================= -->
+          <!-- ADMIN - TODO EL SISTEMA  -->
+          <!-- ========================= -->
+          <th:block th:if="${u != null and u.hasRole('ADMIN')}">
+
+            <!-- DASHBOARD -->
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/admin}">Dashboard</a>
+            </li>
+
+            <!-- COMPRAS -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                Compras
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" th:href="@{/compras/proveedores}">Proveedores</a></li>
+                <li><a class="dropdown-item" th:href="@{/compras/materiales}">Materiales</a></li>
+                <li><a class="dropdown-item" th:href="@{/compras/ordenes}">Órdenes de compra</a></li>
+                <li><a class="dropdown-item" th:href="@{/compras/reabastecer}">Reabastecer</a></li>
+              </ul>
+            </li>
+
+            <!-- INVENTARIO -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                Inventario
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" th:href="@{/almacen/movimientos}">Movimientos</a></li>
+                <li><a class="dropdown-item" th:href="@{/almacen/stock}">Stock</a></li>
+              </ul>
+            </li>
+
+            <!-- VENTAS -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                Ventas
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" th:href="@{/ventas/form}">Registrar venta</a></li>
+                <li><a class="dropdown-item" th:href="@{/ventas/lista}">Listado</a></li>
+              </ul>
+            </li>
+
+            <!-- PRODUCCIÓN -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                Producción
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" th:href="@{/produccion/ordenes}">Órdenes</a></li>
+                <li><a class="dropdown-item" th:href="@{/produccion/insumos}">Insumos</a></li>
+                <li><a class="dropdown-item" th:href="@{/produccion/terminados}">Producto terminado</a></li>
+              </ul>
+            </li>
+
+            <!-- ADMINISTRACIÓN -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                Administración
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" th:href="@{/admin/usuarios}">Usuarios</a></li>
+                <li><a class="dropdown-item" th:href="@{/settings}">Ajustes</a></li>
+              </ul>
+            </li>
+
+          </th:block>
+
+          <!-- ========================= -->
+          <!-- ROLES ESPECÍFICOS        -->
+          <!-- ========================= -->
+
+          <!-- COMPRAS -->
+          <th:block th:if="${u != null and u.hasRole('COMPRAS')}">
+            <li class="nav-item"><a class="nav-link" th:href="@{/compras/proveedores}">Proveedores</a></li>
+            <li class="nav-item"><a class="nav-link" th:href="@{/compras/materiales}">Materiales</a></li>
+            <li class="nav-item"><a class="nav-link" th:href="@{/compras/ordenes}">Órdenes de compra</a></li>
+          </th:block>
+
+          <!-- ALMACÉN -->
+          <th:block th:if="${u != null and u.hasRole('ALMACEN')}">
+            <li class="nav-item"><a class="nav-link" th:href="@{/almacen/movimientos}">Movimientos</a></li>
+            <li class="nav-item"><a class="nav-link" th:href="@{/almacen/stock}">Stock</a></li>
+          </th:block>
+
+          <!-- PRODUCCIÓN (ADMIN) -->
+          <li class="nav-item dropdown"
+              th:if="${u != null and u.hasRole('ADMIN')}">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+              Producción
+            </a>
+
+            <ul class="dropdown-menu">
+              <li>
+                <a class="dropdown-item"
+                   th:href="@{/produccion/ordenes}">
+                  Órdenes de producción
+                </a>
+              </li>
+
+              <li>
+                <a class="dropdown-item"
+                   th:href="@{/produccion/insumos}">
+                  Insumos
+                </a>
+              </li>
+
+              <li>
+                <a class="dropdown-item"
+                   th:href="@{/produccion/terminados}">
+                  Producto terminado
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <!-- PRODUCCIÓN (ROL PRODUCCION) -->
+          <li class="nav-item dropdown"
+              th:if="${u != null and u.hasRole('PRODUCCION')}">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+              Producción
+            </a>
+
+            <ul class="dropdown-menu">
+              <li>
+                <a class="dropdown-item"
+                   th:href="@{/produccion/ordenes}">
+                  Órdenes de producción
+                </a>
+              </li>
+
+              <li>
+                <a class="dropdown-item"
+                   th:href="@{/produccion/insumos}">
+                  Insumos
+                </a>
+              </li>
+
+              <li>
+                <a class="dropdown-item"
+                   th:href="@{/produccion/terminados}">
+                  Producto terminado
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <!-- VENTAS (ADMIN, VENTAS, VENDEDOR) -->
+          <th:block th:if="${u != null and (u.hasRole('VENTAS') or u.hasRole('VENDEDOR'))}">
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                Ventas
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" th:href="@{/ventas/form}">Registrar venta</a></li>
+                <li><a class="dropdown-item" th:href="@{/ventas/lista}">Listado</a></li>
+              </ul>
+            </li>
+          </th:block>
+
+          <!-- LOGOUT -->
+          <li class="nav-item">
+            <a class="nav-link text-danger" th:href="@{/logout}">Cerrar sesión</a>
+          </li>
+
+        </ul>
+
+      </th:block>
     </div>
   </div>
 </nav>

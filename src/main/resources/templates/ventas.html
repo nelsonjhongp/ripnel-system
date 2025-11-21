@@ -1,10 +1,373 @@
 <!doctype html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<body>
+<head>
+  <meta charset="utf-8">
+  <title>Ventas · RIPNEL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+  <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body th:attr="data-bs-theme=${theme}">
+
 <div th:replace="~{_nav :: bar('Ventas')}"></div>
-<div style="padding:16px;color:#e5e7eb;background:#0f172a;min-height:100vh">
-  <h2>Panel Ventas</h2>
-  <p>Registrar venta con ítems.</p>
-</div>
+
+<main class="container-xxl py-4">
+
+  <div class="row g-4">
+
+    <!-- 🔹 PANEL COMPLETO: Nueva venta / proforma -->
+    <section class="col-12">
+      <div class="card p-3">
+        <h2 class="h5 mb-3">Nueva venta / proforma mayorista</h2>
+
+        <form th:action="@{/ventas}" th:object="${form}" method="post" id="saleForm" class="row g-3">
+
+          <!-- Ubicación / tienda -->
+          <div class="col-12 col-md-4">
+            <label class="form-label">Tienda / Ubicación</label>
+            <select class="form-select" th:field="*{locationId}">
+              <option th:each="loc : ${locations}"
+                      th:value="${loc.id}"
+                      th:text="${loc.name}">
+                Tienda
+              </option>
+            </select>
+          </div>
+
+          <!-- Nota / referencia -->
+          <div class="col-12 col-md-8">
+            <label class="form-label">Referencia / Nota</label>
+            <input type="text" class="form-control" th:field="*{note}"
+                   placeholder="Ej. Proforma 001-123 · Cliente mayorista">
+          </div>
+
+          <hr class="mt-2 mb-2">
+
+          <!-- Bloque para añadir ítems -->
+          <div class="col-12">
+            <h3 class="h6 mb-2">Agregar productos a la proforma</h3>
+          </div>
+
+          <!-- Buscador -->
+          <div class="col-12 col-md-6">
+            <label class="form-label">Buscar producto</label>
+            <input type="text" class="form-control" id="productSearch"
+                   placeholder="Escribe parte del SKU o nombre...">
+            <div class="form-text">
+              Filtra la lista de productos por texto.
+            </div>
+          </div>
+
+          <!-- Selector de variante -->
+          <div class="col-12 col-md-6">
+            <label class="form-label">Producto (SKU)</label>
+            <select class="form-select" id="variantSelect">
+              <option value="" selected disabled>Seleccione un producto</option>
+              <option th:each="v : ${variants}"
+                      th:value="${v.id}"
+                      th:text="${v.sku + ' · ' + v.product.name + ' · ' + v.color.name + ' / ' + v.size.code}"
+                      th:attr="data-stock=${v.stockQty},data-price=${v.price != null ? v.price : v.product.price}">
+                SKU - Producto
+              </option>
+            </select>
+            <div class="form-text">
+              Stock global disponible: <strong id="currentStock">—</strong> unidades.
+            </div>
+          </div>
+
+          <!-- Cantidad y precio -->
+          <div class="col-6 col-md-3">
+            <label class="form-label">Cantidad</label>
+            <input type="number" min="1" value="1" class="form-control" id="itemQty">
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label">Precio unitario (S/)</label>
+            <input type="number" step="0.01" min="0" class="form-control" id="itemPrice">
+            <div class="form-text">
+              Ajusta según negociación con el cliente.
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6 d-flex align-items-end justify-content-end">
+            <button type="button" class="btn btn-outline-primary" id="addItemBtn">
+              Agregar ítem
+            </button>
+          </div>
+
+          <!-- Tabla de ítems de la proforma -->
+          <div class="col-12">
+            <h3 class="h6 mb-2">Detalle de la venta</h3>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-2">
+                <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="text-end">Cant.</th>
+                  <th class="text-end">P. Unit.</th>
+                  <th class="text-end">Subtotal</th>
+                  <th></th>
+                </tr>
+                </thead>
+                <tbody id="itemsBody">
+                <!-- Filas dinámicas vía JS -->
+                </tbody>
+                <tfoot>
+                <tr>
+                  <td colspan="3" class="text-end fw-semibold">TOTAL</td>
+                  <td class="text-end fw-semibold">
+                    S/ <span id="saleTotal">0.00</span>
+                  </td>
+                  <td></td>
+                </tr>
+                </tfoot>
+              </table>
+            </div>
+            <p class="text-secondary small mb-0">
+              Cada ítem genera una salida (OUT) en inventario para la tienda seleccionada.
+              Si no hay stock suficiente, no se permitirá agregar el ítem.
+            </p>
+          </div>
+
+          <div class="col-12 mt-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-fill">
+              Registrar venta
+            </button>
+            <a th:href="@{/ventas}" class="btn btn-outline-secondary flex-fill">
+              Limpiar
+            </a>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 🔹 ABAJO: Lista de ventas / proformas recientes -->
+    <section class="col-12">
+      <div class="card p-3">
+        <h2 class="h5 mb-3">Ventas recientes (proformas)</h2>
+
+        <div th:if="${#lists.isEmpty(sales)}" class="text-secondary text-center py-4">
+          Aún no hay ventas registradas.
+        </div>
+
+        <div th:each="s : ${sales}" class="mb-3 border rounded p-3">
+          <div class="d-flex justify-content-between">
+            <div>
+              <div class="fw-semibold" th:text="${#temporals.format(s.dateCreated, 'dd/MM/yyyy HH:mm')}">
+                20/11/2025 19:30
+              </div>
+              <div class="text-secondary small">
+                <span th:text="${s.location != null ? s.location.name : '—'}">Tienda principal</span>
+                ·
+                <span th:text="${s.note}">Proforma 001-123 · Cliente mayorista</span>
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="small text-secondary">Total</div>
+              <div class="fs-6 fw-semibold">
+                S/ <span th:text="${s.totalAmount}">0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive mt-2">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Producto</th>
+                <th class="text-end">Cant.</th>
+                <th class="text-end">P. Unit.</th>
+                <th class="text-end">Subtotal</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr th:each="it : ${s.items}">
+                <td class="small fw-semibold" th:text="${it.variant.sku}">LEG-SUPLEX-RED-S</td>
+                <td th:text="${it.variant.product.name + ' · ' + it.variant.color.name + ' / ' + it.variant.size.code}">
+                  Leggings Deportivo · Rojo / S
+                </td>
+                <td class="text-end" th:text="${it.quantity}">5</td>
+                <td class="text-end" th:text="${it.priceUnit}">25.00</td>
+                <td class="text-end" th:text="${it.subtotal}">125.00</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // === Estado de JS ===
+  let itemIndex = 0;
+
+  const variantSelect = document.getElementById('variantSelect');
+  const productSearch = document.getElementById('productSearch');
+  const currentStockLabel = document.getElementById('currentStock');
+  const qtyInput = document.getElementById('itemQty');
+  const priceInput = document.getElementById('itemPrice');
+  const addItemBtn = document.getElementById('addItemBtn');
+  const itemsBody = document.getElementById('itemsBody');
+  const saleTotalLabel = document.getElementById('saleTotal');
+
+  // Guardar opciones originales para buscador
+  const allOptions = Array.from(variantSelect.options);
+
+  // Actualizar stock visible
+  function updateStockLabel() {
+    const opt = variantSelect.selectedOptions[0];
+    if (!opt || !opt.value) {
+      currentStockLabel.textContent = '—';
+      return;
+    }
+    const stock = opt.getAttribute('data-stock');
+    const price = opt.getAttribute('data-price');
+    currentStockLabel.textContent = stock !== null && stock !== '' ? stock : '—';
+    if (price && (!priceInput.value || priceInput.value === '0')) {
+      priceInput.value = price;
+    }
+  }
+
+  variantSelect.addEventListener('change', updateStockLabel);
+
+  // Buscador de productos
+  productSearch.addEventListener('input', function () {
+    const term = this.value.toLowerCase().trim();
+    variantSelect.innerHTML = '';
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    placeholder.textContent = 'Seleccione un producto';
+    variantSelect.appendChild(placeholder);
+
+    allOptions
+      .filter(opt => opt.value && opt.text.toLowerCase().includes(term))
+      .forEach(opt => variantSelect.appendChild(opt.cloneNode(true)));
+
+    updateStockLabel();
+  });
+
+  // Recalcular total
+  function recalcTotal() {
+    let total = 0;
+    const rows = itemsBody.querySelectorAll('tr:not(.d-none)');
+    rows.forEach(row => {
+      const subtotalCell = row.querySelector('.subtotal-cell');
+      if (!subtotalCell) return;
+      const value = parseFloat(subtotalCell.textContent) || 0;
+      total += value;
+    });
+    saleTotalLabel.textContent = total.toFixed(2);
+  }
+
+  // Agregar ítem con validación de stock
+  addItemBtn.addEventListener('click', function () {
+    const opt = variantSelect.selectedOptions[0];
+    const variantId = opt && opt.value ? opt.value : null;
+    const text = opt && opt.text ? opt.text : '';
+    const qty = parseInt(qtyInput.value, 10);
+    const price = parseFloat(priceInput.value);
+
+    if (!variantId) {
+      alert('Selecciona un producto.');
+      return;
+    }
+    if (!qty || qty <= 0) {
+      alert('La cantidad debe ser mayor a cero.');
+      return;
+    }
+    if (isNaN(price) || price < 0) {
+      alert('Precio no válido.');
+      return;
+    }
+
+    // 🔒 Validación de stock desde el atributo data-stock
+    const stockAttr = opt.getAttribute('data-stock');
+    const stock = (stockAttr !== null && stockAttr !== '') ? parseInt(stockAttr, 10) : null;
+
+    if (stock !== null) {
+      if (stock <= 0) {
+        alert('No hay stock disponible para este producto.');
+        return;
+      }
+      if (qty > stock) {
+        alert('No puedes vender más de lo que hay en stock (' + stock + ' unidades).');
+        return;
+      }
+    }
+
+    const subtotal = qty * price;
+
+    const row = document.createElement('tr');
+
+    row.innerHTML = `
+      <td>
+        <div class="fw-semibold">${text}</div>
+        <input type="hidden" name="items[${itemIndex}].variantId" value="${variantId}">
+      </td>
+      <td>
+        <input type="number"
+               class="form-control form-control-sm text-end qty-input"
+               name="items[${itemIndex}].quantity"
+               value="${qty}" min="1">
+      </td>
+      <td>
+        <input type="number"
+               class="form-control form-control-sm text-end price-input"
+               name="items[${itemIndex}].price"
+               value="${price.toFixed(2)}" step="0.01" min="0">
+      </td>
+      <td class="text-end">
+        <span class="subtotal-cell">${subtotal.toFixed(2)}</span>
+      </td>
+      <td class="text-end">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-item">✕</button>
+      </td>
+    `;
+
+    const qtyField = row.querySelector('.qty-input');
+    const priceField = row.querySelector('.price-input');
+    const subtotalCell = row.querySelector('.subtotal-cell');
+
+    function recalcRow() {
+      const q = parseInt(qtyField.value, 10) || 0;
+      const p = parseFloat(priceField.value) || 0;
+      subtotalCell.textContent = (q * p).toFixed(2);
+      recalcTotal();
+    }
+
+    qtyField.addEventListener('input', recalcRow);
+    priceField.addEventListener('input', recalcRow);
+
+    row.querySelector('.remove-item').addEventListener('click', function () {
+      qtyField.value = 0;
+      row.classList.add('d-none');
+      recalcRow();
+    });
+
+    itemsBody.appendChild(row);
+    itemIndex++;
+    recalcTotal();
+
+    // Reset de controles
+    qtyInput.value = 1;
+    priceInput.value = '';
+  });
+
+  // Inicialización
+  updateStockLabel();
+  recalcTotal();
+</script>
+
 </body>
 </html>

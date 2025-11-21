@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <title>Nueva orden de producción · RIPNEL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+  <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body th:attr="data-bs-theme=${theme}">
+
+<div th:replace="~{_nav :: bar('Producción')}"></div>
+
+<main class="container-xxl py-4">
+
+  <div class="mb-3">
+    <h1 class="h4 mb-1 fw-semibold">Nueva orden de producción</h1>
+    <p class="text-secondary small mb-0">
+      Define el taller y la fecha de inicio. Los productos a fabricar se agregarán después.
+    </p>
+  </div>
+
+  <section class="card p-3">
+    <form th:action="@{/produccion/ordenes/guardar}"
+          th:object="${order}"
+          method="post"
+          class="row g-3">
+
+      <!-- Código (número) -->
+      <div class="col-12 col-md-4">
+        <label class="form-label">Código</label>
+        <input type="text" class="form-control"
+               th:field="*{number}"
+               placeholder="PO-0001"
+               readonly>
+        <div class="form-text">
+          Se genera automáticamente.
+        </div>
+      </div>
+
+      <!-- Taller / ubicación -->
+      <div class="col-12 col-md-4">
+        <label class="form-label">Taller / ubicación</label>
+        <select class="form-select" th:field="*{workshop}">
+          <option th:each="loc : ${locations}"
+                  th:value="${loc.id}"
+                  th:text="${loc.name}">
+          </option>
+        </select>
+      </div>
+
+      <!-- Fecha de inicio -->
+      <div class="col-12 col-md-4">
+        <label class="form-label">Fecha inicio</label>
+        <input type="date" class="form-control" th:field="*{startDate}">
+      </div>
+
+      <!-- Fecha estimada fin (opcional) -->
+      <div class="col-12 col-md-4">
+        <label class="form-label">Fecha estimada fin</label>
+        <input type="date" class="form-control" th:field="*{endDate}">
+      </div>
+
+      <!-- Estado (solo lectura al crear) -->
+      <div class="col-12 col-md-4">
+        <label class="form-label">Estado</label>
+        <input type="text" class="form-control"
+               th:value="${order.status}"
+               readonly>
+      </div>
+
+      <!-- Notas opcionales (si decides agregar campo notes luego) -->
+      <!--
+      <div class="col-12">
+        <label class="form-label">Notas</label>
+        <textarea class="form-control" rows="2" th:field="*{notes}"
+                  placeholder="Ej. Polo MC negro talla surtida para campaña escolar."></textarea>
+      </div>
+      -->
+
+      <div class="col-12 d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-primary">
+          Guardar y continuar
+        </button>
+        <a th:href="@{/produccion/ordenes}" class="btn btn-outline-secondary">
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

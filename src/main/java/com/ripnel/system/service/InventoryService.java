@@ -8,7 +8,9 @@ import com.ripnel.system.repository.InventoryMovementRepository;
 import com.ripnel.system.repository.ProductVariantRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.time.LocalDateTime;
 
 @Service
@@ -29,9 +31,9 @@ public class InventoryService {
      * Registra un movimiento de inventario y actualiza stock.
      *
      * Soportado:
-     *  - IN: entra stock a un local
-     *  - OUT: sale stock de un local
-     *  - TRANSFER: mueve stock de un local origen a un local destino
+     *  - IN: entra stock global de la variante
+     *  - OUT: sale stock global de la variante
+     *  - TRANSFER: genera dos movimientos (OUT origen, IN destino)
      *
      * Reglas:
      *  - Nunca dejamos stock negativo.
@@ -47,7 +49,6 @@ public class InventoryService {
      *
      * Para TRANSFER:
      *   - Usamos mov.getTransferToLocation() como destino
-     *   - (asegúrate de tener ese campo en InventoryMovement si quieres soportar transfer)
      */
     @Transactional
     public void registerMovement(InventoryMovement mov) {
@@ -140,6 +141,41 @@ public class InventoryService {
 
         // Si llega un tipo que no reconocemos
         throw new IllegalArgumentException("Tipo de movimiento no soportado: " + mov.getMovementType());
+    }
+
+    // 🔹 NUEVO: calcular stock por ubicación a partir de los movimientos
+    @Transactional(readOnly = true)
+    public Map<ProductVariant, Integer> getStockForLocation(Location location) {
+
+        if (location == null) {
+            throw new IllegalArgumentException("Ubicación requerida");
+        }
+
+        List<InventoryMovement> movements = movementRepo.findByLocation(location);
+
+        Map<ProductVariant, Integer> stock = new LinkedHashMap<>();
+
+        for (InventoryMovement m : movements) {
+            if (m.getVariant() == null || m.getQuantity() == null) continue;
+
+            int qty = m.getQuantity();
+            int sign = 0;
+
+            if (m.getMovementType() == MovementType.IN) {
+                sign = 1;
+            } else if (m.getMovementType() == MovementType.OUT) {
+                sign = -1;
+            } else {
+                // TRANSFER ya se refleja como IN/OUT según cómo registres movimientos.
+                continue;
+            }
+
+            int delta = sign * qty;
+
+            stock.merge(m.getVariant(), delta, Integer::sum);
+        }
+
+        return stock;
     }
 
     // ayuda: suma evitando null

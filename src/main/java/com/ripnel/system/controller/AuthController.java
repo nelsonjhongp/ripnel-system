@@ -1,32 +1,59 @@
 package com.ripnel.system.controller;
 
+import com.ripnel.system.model.User;
 import com.ripnel.system.service.AuthService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class AuthController {
-    private final AuthService authService;
-    public AuthController(AuthService authService) { this.authService = authService; }
+
+    @Autowired
+    private AuthService authService;
+
+    @GetMapping("/login")
+    public String loginForm() {
+        return "login";
+    }
 
     @PostMapping("/login")
-    public String doLogin(@RequestParam String email,
-                          @RequestParam String password,
-                          HttpSession session,
-                          Model model) {
-        return authService.login(email, password)
-                .map(u -> {
-                    session.setAttribute("USER", u);
-                    boolean isAdmin = u.getRoles()!=null && u.getRoles().stream()
-                            .anyMatch(r -> "ADMIN".equalsIgnoreCase(r.getName()));
-                    return isAdmin ? "redirect:/admin" : "redirect:/home";
-                })
-                .orElseGet(() -> {
-                    model.addAttribute("error", "Credenciales inválidas");
-                    return "login";
-                });
+    public String login(@RequestParam("email") String email,
+                        @RequestParam("password") String password,
+                        HttpSession session) {
+
+        System.out.println(">>> Intento de login: " + email);
+
+        User user = authService.login(email, password);
+
+        if (user == null) {
+            System.out.println(">>> Login falló: usuario null");
+            return "redirect:/login?error";
+        }
+
+        System.out.println(">>> Login OK, usuario: " + user.getEmail());
+
+        // ✔ CORRECTO: guardar como USER
+        session.setAttribute("USER", user);
+
+        // Redirección por rol
+        if (user.hasRole("ADMIN"))
+            return "redirect:/admin";
+
+        if (user.hasRole("COMPRAS"))
+            return "redirect:/compras/ordenes";
+
+        if (user.hasRole("ALMACEN"))
+            return "redirect:/almacen/movimientos";
+
+        if (user.hasRole("PRODUCCION"))
+            return "redirect:/produccion/ordenes";
+
+        if (user.hasRole("VENTAS") || user.hasRole("VENDEDOR"))
+            return "redirect:/ventas";
+
+        return "redirect:/";
     }
 
     @GetMapping("/logout")
@@ -34,14 +61,4 @@ public class AuthController {
         session.invalidate();
         return "redirect:/login";
     }
-
-    @GetMapping("/")
-    public String root(HttpSession session){
-        return (session.getAttribute("USER") != null)
-                ? "redirect:/home"
-                : "redirect:/login";
-    }
-
-    @GetMapping("/login")
-    public String loginPage(){ return "login"; }
 }

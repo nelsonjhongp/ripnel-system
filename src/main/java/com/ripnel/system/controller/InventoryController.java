@@ -37,20 +37,50 @@ public class InventoryController {
     }
 
     @GetMapping
-    public String view(Model model, HttpSession session) {
+    public String view(Model model,
+                       HttpSession session,
+                       @RequestParam(name = "type", required = false) MovementType typeFilter,
+                       @RequestParam(name = "locationId", required = false) Long locationFilterId) {
+
         if (session.getAttribute("USER") == null) {
             return "redirect:/login";
         }
 
-        model.addAttribute("movements", movementRepo.findTop20ByOrderByCreatedAtDesc());
+        // Movimientos recientes (como ya tenías)
+        var movements = movementRepo.findTop20ByOrderByCreatedAtDesc();
+
+        // Filtro por tipo (IN / OUT / TRANSFER)
+        if (typeFilter != null) {
+            movements = movements.stream()
+                    .filter(m -> m.getMovementType() == typeFilter)
+                    .toList();
+        }
+
+        // Filtro por ubicación
+        if (locationFilterId != null) {
+            movements = movements.stream()
+                    .filter(m -> m.getLocation() != null
+                            && m.getLocation().getId().equals(locationFilterId))
+                    .toList();
+        }
+
+        // Datos para la tabla
+        model.addAttribute("movements", movements);
+
+        // Datos para el formulario de nuevo movimiento
         model.addAttribute("variants", variantRepo.findAll());
         model.addAttribute("locations", locationRepo.findAll());
-
         model.addAttribute("form", new MovementForm());
+        model.addAttribute("types", MovementType.values());
+
+        // Para mantener seleccionado el filtro en el HTML
+        model.addAttribute("selectedType", typeFilter);
+        model.addAttribute("selectedLocationId", locationFilterId);
 
         return "almacen/movimientos-list";
     }
 
+    // POST: registrar movimiento desde el form
     @PostMapping
     public String create(@ModelAttribute("form") MovementForm form,
                          HttpSession session) {
@@ -61,24 +91,28 @@ public class InventoryController {
 
         // Construimos el movimiento desde el form
         InventoryMovement mov = new InventoryMovement();
-        mov.setMovementType(form.getMovementType());
+        mov.setMovementType(form.getMovementType());   // IN / OUT (por ahora)
         mov.setQuantity(form.getQuantity());
         mov.setNote(form.getNote());
         mov.setCreatedAt(LocalDateTime.now());
 
         // variant
-        ProductVariant var = variantRepo.findById(form.getVariantId()).orElseThrow();
+        ProductVariant var = variantRepo.findById(form.getVariantId())
+                .orElseThrow(() -> new IllegalArgumentException("Variante no encontrada"));
         mov.setVariant(var);
 
-        // location
-        Location loc = locationRepo.findById(form.getLocationId()).orElse(null);
+        // location (origen)
+        Location loc = locationRepo.findById(form.getLocationId())
+                .orElseThrow(() -> new IllegalArgumentException("Ubicación no encontrada"));
         mov.setLocation(loc);
 
-        // Guardar y actualizar stock
+        // Guardar y actualizar stock (toda la lógica está en el service)
         inventoryService.registerMovement(mov);
 
         return "redirect:/almacen/movimientos";
     }
+
+
 
     // DTO interno para el form
     public static class MovementForm {

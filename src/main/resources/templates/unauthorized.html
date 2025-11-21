@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <title>Acceso Denegado</title>
+  <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+
+<body>
+
+<div th:replace="_nav :: bar('Acceso Denegado')"></div>
+
+<div class="container py-5 text-center">
+
+  <h1 class="display-5 text-danger fw-bold mb-3">
+    <i class="bi bi-shield-x"></i> Acceso Denegado
+  </h1>
+
+  <p class="text-muted mb-4">
+    No tienes permisos para acceder a esta sección.
+  </p>
+
+  <a th:href="@{/}" class="btn btn-primary px-4">Volver al inicio</a>
+
+</div>
+
+</body>
+</html>

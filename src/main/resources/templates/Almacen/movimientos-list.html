@@ -15,36 +15,138 @@
 </head>
 
 <body th:attr="data-bs-theme=${theme}">
-<!-- NAV SUPERIOR -->
-<div th:replace="~{_nav :: bar('Movimientos de Inventario')}"></div>
+
+<!-- NAV -->
+<div th:replace="~{_nav :: bar('Almacén')}"></div>
 
 <main class="container-xxl py-4">
-
-  <!-- fila principal -->
   <div class="row g-4">
 
-    <!-- ============================
-         COL IZQUIERDA: HISTORIAL
-         ============================ -->
-    <section class="col-12 col-lg-7">
+    <!-- Columna izquierda: formulario -->
+    <section class="col-12 col-lg-4">
       <div class="card p-3">
-        <div class="d-flex justify-content-between align-items-start flex-wrap">
-          <div>
-            <h2 class="h6 mb-1">Últimos movimientos</h2>
-            <div class="text-secondary small">
-              Historial de entradas / salidas de stock (máx. 20 más recientes)
+        <h2 class="h5 mb-3">Registrar movimiento</h2>
+
+        <form th:action="@{/almacen/movimientos}" th:object="${form}" method="post" class="row g-3">
+
+          <!-- Tipo -->
+          <div class="col-12">
+            <label class="form-label">Tipo de movimiento</label>
+            <select class="form-select" th:field="*{movementType}">
+              <option th:each="t : ${types}"
+                      th:value="${t}"
+                      th:text="${t}">
+                IN
+              </option>
+            </select>
+            <div class="form-text">
+              IN = ingreso, OUT = salida.
             </div>
           </div>
 
-          <!-- Mensaje de éxito opcional -->
-          <div th:if="${param.ok}" class="text-success small fw-semibold">
-            Movimiento guardado ✓
+          <!-- Variante / SKU -->
+          <div class="col-12">
+            <label class="form-label">Producto (SKU)</label>
+            <select class="form-select" th:field="*{variantId}">
+              <option th:each="v : ${variants}"
+                      th:value="${v.id}"
+                      th:text="${v.sku + ' · ' + v.product.name + ' · ' + v.color.name + ' / ' + v.size.code}">
+                SKU - Producto
+              </option>
+            </select>
           </div>
+
+          <!-- Ubicación -->
+          <div class="col-12">
+            <label class="form-label">Ubicación</label>
+            <select class="form-select" th:field="*{locationId}">
+              <option th:each="loc : ${locations}"
+                      th:value="${loc.id}"
+                      th:text="${loc.name}">
+                Almacén principal
+              </option>
+            </select>
+          </div>
+
+          <!-- Cantidad -->
+          <div class="col-12 col-md-6">
+            <label class="form-label">Cantidad</label>
+            <input type="number" min="1" class="form-control" th:field="*{quantity}">
+          </div>
+
+          <!-- Nota -->
+          <div class="col-12">
+            <label class="form-label">Nota</label>
+            <textarea class="form-control" rows="2" th:field="*{note}"
+                      placeholder="Ej. Ajuste, reposición a tienda, etc."></textarea>
+          </div>
+
+          <div class="col-12 mt-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Guardar movimiento</button>
+            <a th:href="@{/almacen/movimientos}" class="btn btn-outline-secondary">Limpiar</a>
+          </div>
+        </form>
+
+        <p class="text-secondary small mt-3 mb-0">
+          Por ahora se soportan movimientos IN y OUT sobre stock global.
+          La lógica de transferencias y stock por ubicación se añadirá en la siguiente iteración.
+        </p>
+      </div>
+    </section>
+
+    <!-- Columna derecha: filtros + lista de movimientos -->
+    <section class="col-12 col-lg-8">
+      <div class="card p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">Últimos movimientos</h2>
         </div>
 
-        <div class="table-responsive mt-3">
-          <table class="table align-middle table-striped">
-            <thead class="table-light">
+        <!-- 🔎 Filtros -->
+        <form class="row g-2 align-items-end mb-3"
+              th:action="@{/almacen/movimientos}"
+              method="get">
+
+          <!-- Filtro por tipo -->
+          <div class="col-12 col-md-4">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" name="type">
+              <option value="">Todos</option>
+              <option th:each="t : ${types}"
+                      th:value="${t}"
+                      th:text="${t}"
+                      th:selected="${selectedType != null and selectedType.name() == t.name()}">
+              </option>
+            </select>
+          </div>
+
+          <!-- Filtro por ubicación -->
+          <div class="col-12 col-md-4">
+            <label class="form-label">Ubicación</label>
+            <select class="form-select" name="locationId">
+              <option value="">Todas</option>
+              <option th:each="loc : ${locations}"
+                      th:value="${loc.id}"
+                      th:text="${loc.name}"
+                      th:selected="${selectedLocationId != null and selectedLocationId == loc.id}">
+              </option>
+            </select>
+          </div>
+
+          <!-- Botones -->
+          <div class="col-12 col-md-4 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary flex-fill">
+              Filtrar
+            </button>
+            <a th:href="@{/almacen/movimientos}" class="btn btn-outline-secondary flex-fill">
+              Limpiar
+            </a>
+          </div>
+        </form>
+
+        <!-- 🧾 Tabla -->
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
             <tr>
               <th>Fecha/Hora</th>
               <th>Tipo</th>
@@ -59,141 +161,54 @@
             <tbody>
             <tr th:if="${#lists.isEmpty(movements)}">
               <td colspan="7" class="text-secondary text-center py-4">
-                Aún no hay movimientos registrados.
+                No hay movimientos con los filtros seleccionados.
               </td>
             </tr>
 
-            <tr th:each="m : ${movements}" th:unless="${#lists.isEmpty(movements)}" class="align-middle">
-              <td class="text-nowrap" style="vertical-align: middle;">
-                <div th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm')}">
-                  24/10/2025 10:30
-                </div>
+            <tr th:each="m : ${movements}">
+              <!-- fecha -->
+              <td th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm')}">
+                28/10/2025 15:49
               </td>
 
-              <td style="vertical-align: middle;">
-    <span class="badge"
-          th:classappend="${
-              m.movementType.name()=='IN'      ? ' text-bg-success' :
-              (m.movementType.name()=='OUT'    ? ' text-bg-danger'  :
-                                                 ' text-bg-secondary')
-          }"
-          th:text="${m.movementType}">
-      IN
-    </span>
+              <!-- tipo -->
+              <td>
+                <span class="badge"
+                      th:classappend="${
+                          m.movementType.name() == 'IN' ? ' text-bg-success' :
+                          (m.movementType.name() == 'OUT' ? ' text-bg-danger' : ' text-bg-secondary')
+                      }"
+                      th:text="${m.movementType}">
+                  IN
+                </span>
               </td>
 
-              <td style="vertical-align: middle;">
+              <!-- sku -->
+              <td class="small">
                 <div class="fw-semibold" th:text="${m.variant.sku}">LEG-SUPLEX-RED-S</div>
               </td>
 
-              <td style="vertical-align: middle;">
-                <div class="fw-semibold" th:text="${m.variant.product.name}">Leggings Deportivo Suplex</div>
-                <div class="text-secondary small"
-                     th:text="${m.variant.color.name + ' / ' + m.variant.size.code}">
-                  Red / S
-                </div>
-              </td>
+              <!-- producto -->
+              <td th:text="${m.variant.product.name}">Leggings Deportivo Suplex</td>
 
-              <td style="vertical-align: middle;">
-                <div th:text="${m.location != null ? m.location.name : '—'}">Main Warehouse</div>
-              </td>
+              <!-- ubicación -->
+              <td th:text="${m.location != null ? m.location.name : '—'}">Main Warehouse</td>
 
-              <td class="text-end fw-semibold" style="vertical-align: middle;"
-                  th:text="${m.quantity}">
-                2
-              </td>
+              <!-- cantidad -->
+              <td class="text-end fw-semibold" th:text="${m.quantity}">2</td>
 
-              <td style="vertical-align: middle;" th:text="${m.note}">
-                Ingreso proveedor
-              </td>
+              <!-- nota -->
+              <td th:text="${m.note}">Ingreso proveedor</td>
             </tr>
             </tbody>
           </table>
         </div>
-      </div>
-    </section>
 
-    <!-- ============================
-         COL DERECHA: FORMULARIO
-         ============================ -->
-    <section class="col-12 col-lg-5">
-      <div class="card p-3">
-        <h2 class="h6 mb-1">Registrar movimiento</h2>
-        <div class="text-secondary small mb-3">
-          IN = entra stock | OUT = sale stock | TRANSFER = traslado interno
-        </div>
-
-        <!-- FORM -->
-        <form method="post" th:object="${form}" class="vstack gap-3">
-
-          <div>
-            <label class="form-label">Tipo de movimiento</label>
-            <select class="form-select" th:field="*{movementType}" required>
-              <option value="" disabled selected>-- seleccionar --</option>
-              <option th:value="IN">IN (Entrada)</option>
-              <option th:value="OUT">OUT (Salida)</option>
-              <option th:value="TRANSFER">TRANSFER (Traslado)</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="form-label">Variante / SKU</label>
-            <select class="form-select" th:field="*{variantId}" required>
-              <option value="" disabled selected>-- seleccionar SKU/color/talla --</option>
-              <option th:each="v : ${variants}"
-                      th:value="${v.id}"
-                      th:text="${v.sku + ' · ' + v.product.name + ' · ' + v.color.name + ' / ' + v.size.code}">
-                SKU - Producto - Color/Talla
-              </option>
-            </select>
-            <div class="form-text">
-              Esto identifica color+talla exacta.
-            </div>
-          </div>
-
-          <div>
-            <label class="form-label">Cantidad</label>
-            <input type="number" min="1" class="form-control"
-                   th:field="*{quantity}" required>
-          </div>
-
-          <div>
-            <label class="form-label">Ubicación</label>
-            <select class="form-select"
-                    th:field="*{locationId}"
-                    required>
-              <option value="" disabled selected>-- seleccionar local --</option>
-              <option th:each="loc : ${locations}"
-                      th:value="${loc.id}"
-                      th:text="${loc.name}">
-                Almacén Central
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <label class="form-label">Nota (opcional)</label>
-            <input class="form-control"
-                   th:field="*{note}"
-                   placeholder="Ingreso proveedor / salida a vitrina / traslado a tienda...">
-          </div>
-
-          <div class="text-end">
-            <button class="btn btn-primary" type="submit">
-              Guardar movimiento
-            </button>
-          </div>
-
-        </form>
-
-        <hr class="my-4">
-
-        <!-- mini info -->
-        <div class="small text-secondary">
-          Esta pantalla es usada por almacén.
-          Cada salida (OUT) reduce stock de esa variante.
-          Cada entrada (IN) aumenta stock.
-          Transfer todavía no ajusta stock por ubicación, eso viene en otra iteración.
+        <div class="text-secondary small mt-2">
+          Esta pantalla es usada por almacén.<br>
+          Cada salida (OUT) reduce stock global de esa variante.<br>
+          Cada entrada (IN) aumenta stock global.<br>
+          En una siguiente iteración se ajustará stock por ubicación y transferencias completas.
         </div>
       </div>
     </section>

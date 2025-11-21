@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>Nueva venta · RIPNEL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body th:attr="data-bs-theme=${theme}">
+
+<div th:replace="~{_nav :: bar('Ventas / Nueva venta')}"></div>
+
+<main class="container-xxl py-4">
+
+    <div class="card p-3">
+        <h2 class="h5 mb-3">Nueva venta / Proforma</h2>
+
+        <form th:action="@{/ventas}" th:object="${form}" method="post" id="saleForm" class="row g-3">
+
+            <!-- UBICACIÓN -->
+            <div class="col-md-4">
+                <label class="form-label">Tienda / Ubicación</label>
+                <select class="form-select" th:field="*{locationId}" required>
+                    <option value="">Seleccione...</option>
+                    <option th:each="loc : ${locations}" th:value="${loc.id}" th:text="${loc.name}"></option>
+                </select>
+            </div>
+
+            <!-- NOTA -->
+            <div class="col-md-8">
+                <label class="form-label">Referencia / Nota</label>
+                <input type="text" class="form-control" th:field="*{note}">
+            </div>
+
+            <hr class="mt-2 mb-2">
+
+            <!-- BUSCADOR -->
+            <div class="col-md-6">
+                <label class="form-label">Buscar producto</label>
+                <input type="text" class="form-control" id="productSearch" placeholder="Escribe parte del SKU o nombre...">
+            </div>
+
+            <!-- SELECT SKU -->
+            <div class="col-md-6">
+                <label class="form-label">Producto (SKU)</label>
+                <select class="form-select" id="variantSelect">
+                    <option value="" disabled selected>Seleccione un producto</option>
+                    <option th:each="v : ${variants}"
+                            th:value="${v.id}"
+                            th:text="${v.sku + ' · ' + v.product.name + ' · ' + v.color.name + ' / ' + v.size.code}"
+                            th:attr="data-stock=${v.stockQty},data-price=${v.price != null ? v.price : v.product.price}">
+                    </option>
+                </select>
+                <div class="form-text">
+                    Stock disponible: <strong id="currentStock">—</strong>
+                </div>
+            </div>
+
+            <!-- Cantidad y Precio -->
+            <div class="col-md-3">
+                <label class="form-label">Cantidad</label>
+                <input type="number" id="itemQty" class="form-control" min="1" value="1">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Precio unitario (S/)</label>
+                <input type="number" id="itemPrice" class="form-control" step="0.01" min="0">
+            </div>
+
+            <div class="col-md-6 d-flex align-items-end justify-content-end">
+                <button type="button" class="btn btn-outline-primary" id="addItemBtn">
+                    Agregar ítem
+                </button>
+            </div>
+
+            <!-- TABLA DETALLE -->
+            <div class="col-12">
+                <h3 class="h6 mb-2">Detalle de la venta</h3>
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-2">
+                        <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-end">Cant.</th>
+                            <th class="text-end">P. Unit.</th>
+                            <th class="text-end">Subtotal</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody id="itemsBody"></tbody>
+
+                        <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end fw-semibold">TOTAL</td>
+                            <td class="text-end fw-semibold">
+                                S/ <span id="saleTotal">0.00</span>
+                            </td>
+                            <td></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <p class="text-secondary small">
+                    Cada ítem genera un movimiento OUT en el inventario.
+                </p>
+            </div>
+
+            <!-- BOTONES -->
+            <div class="col-12 d-flex gap-2">
+                <button class="btn btn-primary flex-fill" type="submit">Registrar venta</button>
+                <a th:href="@{/ventas/form}" class="btn btn-outline-secondary flex-fill">Limpiar</a>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  let itemIndex = 0;
+
+  const variantSelect = document.getElementById('variantSelect');
+  const allOptions = Array.from(variantSelect.options);
+  const productSearch = document.getElementById('productSearch');
+  const currentStockLabel = document.getElementById('currentStock');
+  const qtyInput = document.getElementById('itemQty');
+  const priceInput = document.getElementById('itemPrice');
+  const addItemBtn = document.getElementById('addItemBtn');
+  const itemsBody = document.getElementById('itemsBody');
+  const totalLabel = document.getElementById('saleTotal');
+
+  function updateStockLabel() {
+    const opt = variantSelect.selectedOptions[0];
+    if (!opt || !opt.value) { currentStockLabel.textContent = '—'; return; }
+    currentStockLabel.textContent = opt.getAttribute('data-stock') || '—';
+
+    const price = opt.getAttribute('data-price');
+    if (price && (!priceInput.value || priceInput.value === '0')) {
+      priceInput.value = price;
+    }
+  }
+
+  variantSelect.addEventListener('change', updateStockLabel);
+
+  productSearch.addEventListener('input', function() {
+    const term = this.value.toLowerCase();
+    variantSelect.innerHTML = '';
+
+    const ph = document.createElement('option');
+    ph.value = ''; ph.selected = true; ph.disabled = true;
+    ph.textContent = 'Seleccione un producto';
+    variantSelect.appendChild(ph);
+
+    allOptions
+      .filter(o => o.value && o.text.toLowerCase().includes(term))
+      .forEach(o => variantSelect.appendChild(o.cloneNode(true)));
+
+    updateStockLabel();
+  });
+
+  function recalcTotal() {
+    let total = 0;
+    itemsBody.querySelectorAll('tr').forEach(row => {
+      const sub = parseFloat(row.querySelector('.subtotal-cell')?.textContent || 0);
+      total += sub;
+    });
+    totalLabel.textContent = total.toFixed(2);
+  }
+
+  addItemBtn.addEventListener('click', () => {
+
+    const opt = variantSelect.selectedOptions[0];
+    if (!opt || !opt.value) return alert("Selecciona un producto");
+
+    const variantId = opt.value;
+    const text = opt.text;
+    const qty = parseInt(qtyInput.value);
+    const price = parseFloat(priceInput.value);
+
+    const stock = parseInt(opt.getAttribute('data-stock') || '0');
+
+    if (qty > stock) return alert("Stock insuficiente");
+
+    const subtotal = qty * price;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        ${text}
+        <input type="hidden" name="items[${itemIndex}].variantId" value="${variantId}">
+      </td>
+      <td>
+        <input type="number" class="form-control form-control-sm text-end qty-input"
+               name="items[${itemIndex}].quantity" value="${qty}" min="1">
+      </td>
+      <td>
+        <input type="number" class="form-control form-control-sm text-end price-input"
+               name="items[${itemIndex}].price" value="${price.toFixed(2)}" step="0.01">
+      </td>
+      <td class="text-end"><span class="subtotal-cell">${subtotal.toFixed(2)}</span></td>
+      <td class="text-end">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-item">✕</button>
+      </td>
+    `;
+
+    const qtyField = tr.querySelector('.qty-input');
+    const priceField = tr.querySelector('.price-input');
+    const subtotalCell = tr.querySelector('.subtotal-cell');
+
+    function recalcRow() {
+      const q = parseInt(qtyField.value) || 0;
+      const p = parseFloat(priceField.value) || 0;
+      subtotalCell.textContent = (q * p).toFixed(2);
+      recalcTotal();
+    }
+
+    qtyField.addEventListener('input', recalcRow);
+    priceField.addEventListener('input', recalcRow);
+
+    tr.querySelector('.remove-item').addEventListener('click', () => {
+      tr.remove();
+      recalcTotal();
+    });
+
+    itemsBody.appendChild(tr);
+    itemIndex++;
+    recalcTotal();
+  });
+
+  updateStockLabel();
+  recalcTotal();
+</script>
+
+</body>
+</html>
